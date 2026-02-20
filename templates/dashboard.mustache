@@ -1,0 +1,467 @@
+{{!
+    MRCA Dashboard Template — Tabbed layout.
+
+    All chart rendering, pagination, and AJAX is handled by the AMD module
+    local_mrca/dashboard (initialized from index.php).
+
+    @package    local_mrca
+    @copyright  2026 Mr Jacket
+    @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+
+<div class="mrca-dashboard">
+    {{^has_scans}}
+    <div class="alert alert-info">
+        <i class="fa fa-info-circle"></i> {{#str}}no_scans_yet, local_mrca{{/str}}
+    </div>
+    <div class="text-center mt-4 mb-4">
+        <a href="{{scan_url}}?action=scan&sesskey={{sesskey}}"
+           class="btn btn-primary btn-lg"
+           onclick="return confirm('{{#str}}confirm_scan, local_mrca{{/str}}');">
+            <i class="fa fa-search"></i> {{#str}}scan_now, local_mrca{{/str}}
+        </a>
+    </div>
+    {{/has_scans}}
+
+    {{#has_scans}}
+
+    {{! ===== 1. SITE RISK INDEX CARD (always visible) ===== }}
+    <div class="card mb-4 border-{{site_risk_badge}}">
+        <div class="card-header bg-{{site_risk_badge}} text-white">
+            <h3 class="card-title mb-0">
+                <i class="fa fa-shield"></i> {{#str}}site_risk_index, local_mrca{{/str}}
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3 text-center">
+                    <div style="font-size: 3.5rem; font-weight: bold; line-height: 1;">
+                        {{site_risk_index}}
+                    </div>
+                    <div class="text-muted">/ 100</div>
+                    <span class="badge badge-{{site_risk_badge}} mt-2" style="font-size: 1rem; padding: 0.5em 1em;">
+                        {{site_risk_label}}
+                    </span>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">{{#str}}total_score, local_mrca{{/str}}</div>
+                    <div class="h4">{{total_score}}</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">{{#str}}plugins_scanned, local_mrca{{/str}}</div>
+                    <div class="h4">{{plugins_scanned}}</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">{{#str}}roles_scanned, local_mrca{{/str}}</div>
+                    <div class="h4">{{roles_scanned}}</div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <small class="text-muted">{{#str}}scan_date, local_mrca{{/str}}: {{scan_date}}</small>
+                </div>
+                <div class="col-md-6 text-right">
+                    <a href="{{scan_url}}?action=scan&sesskey={{sesskey}}"
+                       class="btn btn-outline-primary btn-sm"
+                       onclick="return confirm('{{#str}}confirm_scan, local_mrca{{/str}}');">
+                        <i class="fa fa-refresh"></i> {{#str}}scan_now, local_mrca{{/str}}
+                    </a>
+                    <a href="{{scan_url}}?action=download_pdf&scanid={{scanid}}&sesskey={{sesskey}}" class="btn btn-outline-danger btn-sm ml-1">
+                        <i class="fa fa-file-pdf-o"></i> PDF
+                    </a>
+                    <a href="{{scan_url}}?action=download_csv&scanid={{scanid}}&sesskey={{sesskey}}" class="btn btn-outline-success btn-sm">
+                        <i class="fa fa-file-excel-o"></i> CSV
+                    </a>
+                    <a href="{{scan_url}}?action=download_json&scanid={{scanid}}&sesskey={{sesskey}}" class="btn btn-outline-info btn-sm">
+                        <i class="fa fa-file-code-o"></i> JSON
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{! ===== TAB NAVIGATION ===== }}
+    <ul class="nav nav-tabs mb-3" id="mrca-tabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="mrca-tab-overview" data-toggle="tab" href="#mrca-pane-overview" role="tab">
+                <i class="fa fa-tachometer"></i> {{#str}}dashboard_title, local_mrca{{/str}}
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="mrca-tab-deps" data-toggle="tab" href="#mrca-pane-deps" role="tab">
+                <i class="fa fa-cubes"></i> {{#str}}dependency_audit, local_mrca{{/str}}
+                {{#has_dep_audit}}<span class="badge badge-warning ml-1">!</span>{{/has_dep_audit}}
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="mrca-tab-perms" data-toggle="tab" href="#mrca-pane-perms" role="tab">
+                <i class="fa fa-th"></i> {{#str}}role_heatmap, local_mrca{{/str}}
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="mrca-tab-alerts" data-toggle="tab" href="#mrca-pane-alerts" role="tab">
+                <i class="fa fa-exclamation-triangle"></i> {{#str}}alerts, local_mrca{{/str}}
+                {{#has_alerts}}<span class="badge badge-danger ml-1">!</span>{{/has_alerts}}
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="mrca-tab-plugins" data-toggle="tab" href="#mrca-pane-plugins" role="tab">
+                <i class="fa fa-puzzle-piece"></i> {{#str}}plugin_risk_details, local_mrca{{/str}}
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="mrca-tab-whitelist" data-toggle="tab" href="#mrca-pane-whitelist" role="tab">
+                <i class="fa fa-list"></i> {{#str}}whitelist, local_mrca{{/str}}
+            </a>
+        </li>
+    </ul>
+
+    {{! ===== TAB PANES ===== }}
+    <div class="tab-content" id="mrca-tabs-content">
+
+        {{! === TAB 1: OVERVIEW (charts + top 5) === }}
+        <div class="tab-pane fade show active" id="mrca-pane-overview" role="tabpanel">
+
+            {{! Charts row }}
+            <div class="row mb-4">
+                {{#has_trend}}
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0"><i class="fa fa-line-chart"></i> {{#str}}risk_trend, local_mrca{{/str}}</h5>
+                        </div>
+                        <div class="card-body">
+                            <div style="position: relative; height: 220px;">
+                                <canvas id="mrca-trend-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {{/has_trend}}
+                <div class="{{#has_trend}}col-md-6{{/has_trend}}{{^has_trend}}col-md-12{{/has_trend}}">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0"><i class="fa fa-pie-chart"></i> {{#str}}risk_distribution, local_mrca{{/str}}</h5>
+                        </div>
+                        <div class="card-body text-center">
+                            <div style="position: relative; height: 220px;">
+                                <canvas id="mrca-risk-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{! Top 5 row }}
+            <div class="row">
+                {{#has_top_plugins}}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0"><i class="fa fa-exclamation-circle"></i> {{#str}}top_risky_plugins, local_mrca{{/str}}</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <table class="table table-sm table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>{{#str}}plugin, local_mrca{{/str}}</th>
+                                        <th class="text-center">P</th>
+                                        <th class="text-center">D</th>
+                                        <th class="text-center">C</th>
+                                        <th class="text-center">{{#str}}total_score, local_mrca{{/str}}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{#top_plugins}}
+                                    <tr>
+                                        <td><code>{{component}}</code></td>
+                                        <td class="text-center">{{privacy_score}}</td>
+                                        <td class="text-center">{{dependency_score}}</td>
+                                        <td class="text-center">{{capability_score}}</td>
+                                        <td class="text-center"><span class="badge badge-{{badge_class}}">{{total_score}}</span></td>
+                                    </tr>
+                                    {{/top_plugins}}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {{/has_top_plugins}}
+
+                {{#has_top_roles}}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0"><i class="fa fa-users"></i> {{#str}}top_risky_roles, local_mrca{{/str}}</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <table class="table table-sm table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>{{#str}}role, local_mrca{{/str}}</th>
+                                        <th class="text-center">{{#str}}critical_caps, local_mrca{{/str}}</th>
+                                        <th class="text-center">{{#str}}role_risk_score, local_mrca{{/str}}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{#top_roles}}
+                                    <tr>
+                                        <td><strong>{{role_shortname}}</strong></td>
+                                        <td class="text-center"><span class="badge badge-{{badge_class}}">{{critical_cap_count}}</span></td>
+                                        <td class="text-center">{{risk_score}}</td>
+                                    </tr>
+                                    {{/top_roles}}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {{/has_top_roles}}
+            </div>
+        </div>
+
+        {{! === TAB 2: DEPENDENCY AUDIT === }}
+        <div class="tab-pane fade" id="mrca-pane-deps" role="tabpanel">
+            {{#has_dep_audit}}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="fa fa-cubes"></i> {{#str}}dependency_audit, local_mrca{{/str}}</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table id="mrca-dep-table" class="table table-sm mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 25%;">{{#str}}plugin, local_mrca{{/str}}</th>
+                                    <th>{{#str}}dep_issues, local_mrca{{/str}}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#dep_audit}}
+                                <tr>
+                                    <td><code>{{plugin}}</code></td>
+                                    <td>
+                                        {{#issues}}
+                                        <div class="mb-1">
+                                            <span class="badge badge-{{severity_badge}}">{{severity}}</span>
+                                            {{message}}
+                                        </div>
+                                        {{/issues}}
+                                    </td>
+                                </tr>
+                                {{/dep_audit}}
+                            </tbody>
+                        </table>
+                    </div>
+                    <nav aria-label="Dependency audit pagination">
+                        <ul id="mrca-dep-pagination" class="pagination justify-content-center mt-3 mb-3"></ul>
+                    </nav>
+                </div>
+            </div>
+            {{/has_dep_audit}}
+            {{^has_dep_audit}}
+            <div class="text-muted text-center p-5">
+                <i class="fa fa-check-circle" style="font-size: 2rem; color: #28a745;"></i>
+                <p class="mt-2">No dependency issues found.</p>
+            </div>
+            {{/has_dep_audit}}
+        </div>
+
+        {{! === TAB 3: PERMISSION HEATMAP === }}
+        <div class="tab-pane fade" id="mrca-pane-perms" role="tabpanel">
+            {{#has_heatmap}}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="fa fa-th"></i> {{#str}}role_heatmap, local_mrca{{/str}}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">{{#str}}role_heatmap_desc, local_mrca{{/str}}</p>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{{#str}}role, local_mrca{{/str}}</th>
+                                    <th class="text-center">{{#str}}critical_caps, local_mrca{{/str}}</th>
+                                    <th class="text-center">{{#str}}role_risk_score, local_mrca{{/str}}</th>
+                                    <th class="text-center">{{#str}}risk_level, local_mrca{{/str}}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#role_heatmap}}
+                                <tr class="table-{{heatmap_class}}">
+                                    <td><strong>{{role_shortname}}</strong></td>
+                                    <td class="text-center"><span class="badge badge-{{heatmap_class}}">{{critical_cap_count}}</span></td>
+                                    <td class="text-center">{{risk_score}}</td>
+                                    <td class="text-center">{{emoji}}</td>
+                                </tr>
+                                {{/role_heatmap}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {{/has_heatmap}}
+            {{^has_heatmap}}
+            <div class="text-muted text-center p-5">
+                <i class="fa fa-check-circle" style="font-size: 2rem; color: #28a745;"></i>
+                <p class="mt-2">No role risk data available.</p>
+            </div>
+            {{/has_heatmap}}
+        </div>
+
+        {{! === TAB 4: CORRELATION ALERTS === }}
+        <div class="tab-pane fade" id="mrca-pane-alerts" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="fa fa-exclamation-triangle"></i> {{#str}}alerts, local_mrca{{/str}}</h5>
+                </div>
+                <div class="card-body">
+                    {{^has_alerts}}
+                    <div class="text-muted text-center p-4">
+                        <i class="fa fa-check-circle" style="font-size: 2rem; color: #28a745;"></i>
+                        <p class="mt-2">{{#str}}no_alerts, local_mrca{{/str}}</p>
+                    </div>
+                    {{/has_alerts}}
+                    {{#has_alerts}}
+                    {{#alerts}}
+                    <div class="alert alert-{{severity_badge}} py-2 mb-2" role="alert">
+                        <small>
+                            <span class="badge badge-{{severity_badge}}">{{severity}}</span>
+                            <strong>[{{type}}]</strong>
+                            {{#component}}<code>{{component}}</code> — {{/component}}
+                            {{description}}
+                        </small>
+                    </div>
+                    {{/alerts}}
+                    {{/has_alerts}}
+                </div>
+            </div>
+        </div>
+
+        {{! === TAB 5: FULL PLUGIN RISK TABLE (paginated) === }}
+        <div class="tab-pane fade" id="mrca-pane-plugins" role="tabpanel">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0"><i class="fa fa-puzzle-piece"></i> {{#str}}plugin_risk_details, local_mrca{{/str}}</h5>
+                    <div>
+                        <a href="{{scan_url}}?action=download_pdf&scanid={{scanid}}&sesskey={{sesskey}}" class="btn btn-outline-danger btn-sm">
+                            <i class="fa fa-file-pdf-o"></i> PDF
+                        </a>
+                        <a href="{{scan_url}}?action=download_csv&scanid={{scanid}}&sesskey={{sesskey}}" class="btn btn-outline-success btn-sm">
+                            <i class="fa fa-file-excel-o"></i> CSV
+                        </a>
+                        <a href="{{scan_url}}?action=download_json&scanid={{scanid}}&sesskey={{sesskey}}" class="btn btn-outline-info btn-sm">
+                            <i class="fa fa-file-code-o"></i> JSON
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="mrca-plugin-table" class="table table-striped table-hover table-sm">
+                            <thead>
+                                <tr>
+                                    <th>{{#str}}plugin, local_mrca{{/str}}</th>
+                                    <th class="text-center">{{#str}}privacy_score, local_mrca{{/str}}</th>
+                                    <th class="text-center">{{#str}}dependency_score, local_mrca{{/str}}</th>
+                                    <th class="text-center">{{#str}}capability_score, local_mrca{{/str}}</th>
+                                    <th class="text-center">{{#str}}risk_score, local_mrca{{/str}}</th>
+                                    <th class="text-center">{{#str}}risk_level, local_mrca{{/str}}</th>
+                                    <th class="text-center">{{#str}}privacy_api, local_mrca{{/str}}</th>
+                                    {{#has_integration}}
+                                    <th></th>
+                                    {{/has_integration}}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#plugin_risks}}
+                                <tr>
+                                    <td>
+                                        <code>{{plugin}}</code>
+                                        {{#has_pii_fields}}
+                                        <button class="btn btn-link btn-sm p-0 ml-1 mrca-toggle-pii" data-target="#pii-{{id}}" title="{{#str}}detected_pii_fields, local_mrca{{/str}}">
+                                            <i class="fa fa-database text-warning"></i>
+                                        </button>
+                                        {{/has_pii_fields}}
+                                    </td>
+                                    <td class="text-center">{{privacy_score}}</td>
+                                    <td class="text-center">{{dependency_score}}</td>
+                                    <td class="text-center">{{capability_score}}</td>
+                                    <td class="text-center"><strong>{{risk_score}}</strong></td>
+                                    <td class="text-center"><span class="badge badge-{{badge_class}}">{{risk_level}}</span></td>
+                                    <td class="text-center">
+                                        {{#has_privacy_provider}}
+                                        <span class="text-success">✓</span>
+                                        {{/has_privacy_provider}}
+                                        {{^has_privacy_provider}}
+                                        <span class="text-danger">✗</span>
+                                        {{/has_privacy_provider}}
+                                    </td>
+                                    {{#has_integration}}
+                                    <td>
+                                        <button class="btn btn-outline-secondary btn-sm mrca-send-report" data-resultid="{{id}}" title="{{#str}}send_report, local_mrca{{/str}}">
+                                            <i class="fa fa-paper-plane"></i>
+                                        </button>
+                                    </td>
+                                    {{/has_integration}}
+                                </tr>
+                                {{#has_pii_fields}}
+                                <tr id="pii-{{id}}" class="mrca-pii-row" style="display: none;">
+                                    <td colspan="8" class="bg-light p-2">
+                                        <small class="text-muted d-block mb-1"><i class="fa fa-database"></i> {{#str}}detected_pii_fields, local_mrca{{/str}}:</small>
+                                        {{#pii_fields}}
+                                        <div class="d-inline-flex align-items-center mr-3 mb-1 mrca-pii-field">
+                                            <code class="mr-1">{{table}}.{{field}}</code>
+                                            <button class="btn btn-outline-warning btn-sm py-0 px-1 mrca-whitelist-add"
+                                                    data-component="{{component}}"
+                                                    data-table="{{table}}"
+                                                    data-field="{{field}}"
+                                                    title="{{#str}}whitelist_this_field, local_mrca{{/str}}">
+                                                <i class="fa fa-check"></i>
+                                            </button>
+                                        </div>
+                                        {{/pii_fields}}
+                                    </td>
+                                </tr>
+                                {{/has_pii_fields}}
+                                {{/plugin_risks}}
+                            </tbody>
+                        </table>
+                    </div>
+                    {{! Pagination rendered by AMD module }}
+                    <nav aria-label="Plugin risk pagination">
+                        <ul id="mrca-pagination" class="pagination justify-content-center mt-3"></ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        {{! === TAB 6: WHITELIST === }}
+        <div class="tab-pane fade" id="mrca-pane-whitelist" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="fa fa-list"></i> {{#str}}whitelist, local_mrca{{/str}}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">{{#str}}whitelist_desc, local_mrca{{/str}}</p>
+                    {{#whitelist_items}}
+                    <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                        <div>
+                            <code>{{component}}</code> →
+                            <code>{{table_name}}.{{field_name}}</code>
+                        </div>
+                        <button class="btn btn-outline-danger btn-sm mrca-whitelist-remove" data-id="{{id}}">
+                            <i class="fa fa-times"></i> {{#str}}whitelist_remove, local_mrca{{/str}}
+                        </button>
+                    </div>
+                    {{/whitelist_items}}
+                    {{^whitelist_items}}
+                    <p class="text-muted text-center">{{#str}}whitelist_empty, local_mrca{{/str}}</p>
+                    {{/whitelist_items}}
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    {{/has_scans}}
+</div>
