@@ -314,7 +314,7 @@ Configura un endpoint HTTP para recibir solicitudes POST con resultados de escan
 
 ### Integración MIH
 
-Si [Moodle Integration Hub](https://github.com/your-org/moodle-local_integrationhub) está instalado, MRCA puede despachar reportes a través del bus de servicios MIH.
+Si [Moodle Integration Hub](https://github.com/x-name15/moodle-integration-hub) está instalado, MRCA puede despachar reportes a través del bus de servicios MIH.
 
 ---
 
