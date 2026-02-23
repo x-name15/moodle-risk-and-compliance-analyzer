@@ -80,7 +80,7 @@ if ($hassiteconfig) {
     ];
 
     // Check if MIH is installed.
-    if (\core\component::get_component_directory('local_integrationhub')) {
+    if (core_component::get_component_directory('local_integrationhub')) {
         $integration_options['mih'] = get_string('integration_method_mih', 'local_mrca') .
             ' (' . get_string('recommended', 'local_mrca') . ')';
     }
