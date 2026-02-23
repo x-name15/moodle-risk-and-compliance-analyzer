@@ -33,7 +33,7 @@ if ($hassiteconfig) {
         get_string('dashboard_title', 'local_mrca'),
         new moodle_url('/local/mrca/index.php'),
         'local/mrca:view'
-        ));
+    ));
 
     // Settings page.
     $settings = new admin_settingpage('local_mrca_settings', get_string('settings', 'local_mrca'));
@@ -44,34 +44,44 @@ if ($hassiteconfig) {
         get_string('autoscan_new_plugins', 'local_mrca'),
         get_string('autoscan_new_plugins_desc', 'local_mrca'),
         0
-        ));
+    ));
 
     $settings->add(new admin_setting_configcheckbox(
         'local_mrca/scan_core_plugins',
         get_string('scan_core_plugins', 'local_mrca'),
         get_string('scan_core_plugins_desc', 'local_mrca'),
         0
-        ));
+    ));
 
     // --- Risk Thresholds ---
-    $settings->add(new admin_setting_heading('local_mrca/risk_heading',
+    $settings->add(new admin_setting_heading(
+        'local_mrca/risk_heading',
         get_string('risk_thresholds_heading', 'local_mrca'),
-        get_string('risk_thresholds_heading_desc', 'local_mrca')));
+        get_string('risk_thresholds_heading_desc', 'local_mrca')
+    ));
 
-    $settings->add(new admin_setting_configtext('local_mrca/threshold_high',
+    $settings->add(new admin_setting_configtext(
+        'local_mrca/threshold_high',
         get_string('threshold_high', 'local_mrca'),
         get_string('threshold_high_desc', 'local_mrca'),
-        '61', PARAM_INT));
+        '61',
+        PARAM_INT
+    ));
 
-    $settings->add(new admin_setting_configtext('local_mrca/threshold_medium',
+    $settings->add(new admin_setting_configtext(
+        'local_mrca/threshold_medium',
         get_string('threshold_medium', 'local_mrca'),
         get_string('threshold_medium_desc', 'local_mrca'),
-        '31', PARAM_INT));
+        '31',
+        PARAM_INT
+    ));
 
     // --- External Integration ---
-    $settings->add(new admin_setting_heading('local_mrca/integration_heading',
+    $settings->add(new admin_setting_heading(
+        'local_mrca/integration_heading',
         get_string('integration_heading', 'local_mrca'),
-        get_string('integration_heading_desc', 'local_mrca')));
+        get_string('integration_heading_desc', 'local_mrca')
+    ));
 
     // Integration Method Selector.
     $integration_options = [
@@ -83,65 +93,87 @@ if ($hassiteconfig) {
     if (core_component::get_component_directory('local_integrationhub')) {
         $integration_options['mih'] = get_string('integration_method_mih', 'local_mrca') .
             ' (' . get_string('recommended', 'local_mrca') . ')';
-    }
-    else {
-        $settings->add(new admin_setting_description('local_mrca/mih_missing',
-            '', get_string('mih_missing_note', 'local_mrca')));
+    } else {
+        $settings->add(new admin_setting_description(
+            'local_mrca/mih_missing',
+            '',
+            get_string('mih_missing_note', 'local_mrca')
+        ));
     }
 
-    $settings->add(new admin_setting_configselect('local_mrca/integration_method',
+    $settings->add(new admin_setting_configselect(
+        'local_mrca/integration_method',
         get_string('integration_method', 'local_mrca'),
         get_string('integration_method_desc', 'local_mrca'),
-        'disabled', $integration_options));
+        'disabled',
+        $integration_options
+    ));
 
     // MIH Slug (Show if method == mih).
-    $setting = new admin_setting_configtext('local_mrca/mih_service_slug',
+    $setting = new admin_setting_configtext(
+        'local_mrca/mih_service_slug',
         get_string('mih_service_slug', 'local_mrca'),
         get_string('mih_service_slug_desc', 'local_mrca'),
-        '', PARAM_TEXT);
+        '',
+        PARAM_TEXT
+    );
     $setting->set_updatedcallback(function () {
-        return true; });
+        return true;
+    });
     $settings->add($setting);
     $settings->hide_if('local_mrca/mih_service_slug', 'local_mrca/integration_method', 'neq', 'mih');
 
     // Webhook URL (Show if method == webhook).
-    $setting = new admin_setting_configtext('local_mrca/webhook_url',
+    $setting = new admin_setting_configtext(
+        'local_mrca/webhook_url',
         get_string('webhook_url', 'local_mrca'),
         get_string('webhook_url_desc', 'local_mrca'),
-        '', PARAM_URL);
+        '',
+        PARAM_URL
+    );
     $settings->add($setting);
     $settings->hide_if('local_mrca/webhook_url', 'local_mrca/integration_method', 'neq', 'webhook');
 
     // Webhook Token (Show if method == webhook).
-    $setting = new admin_setting_configpasswordunmask('local_mrca/webhook_token',
+    $setting = new admin_setting_configpasswordunmask(
+        'local_mrca/webhook_token',
         get_string('webhook_token', 'local_mrca'),
         get_string('webhook_token_desc', 'local_mrca'),
-        '');
+        ''
+    );
     $settings->add($setting);
     $settings->hide_if('local_mrca/webhook_token', 'local_mrca/integration_method', 'neq', 'webhook');
 
     // --- Report Dispatch Options (visible when integration is NOT disabled) ---
-    $settings->add(new admin_setting_heading('local_mrca/report_dispatch_heading',
+    $settings->add(new admin_setting_heading(
+        'local_mrca/report_dispatch_heading',
         get_string('report_dispatch_heading', 'local_mrca'),
-        get_string('report_dispatch_heading_desc', 'local_mrca')));
+        get_string('report_dispatch_heading_desc', 'local_mrca')
+    ));
 
     // Report trigger: always or critical only.
-    $settings->add(new admin_setting_configselect('local_mrca/report_trigger',
+    $settings->add(new admin_setting_configselect(
+        'local_mrca/report_trigger',
         get_string('report_trigger', 'local_mrca'),
         get_string('report_trigger_desc', 'local_mrca'),
-        'always', [
+        'always',
+        [
         'always' => get_string('report_trigger_always', 'local_mrca'),
         'critical_only' => get_string('report_trigger_critical', 'local_mrca'),
-    ]));
+        ]
+    ));
     $settings->hide_if('local_mrca/report_trigger', 'local_mrca/integration_method', 'eq', 'disabled');
 
     // Report payload: full or summary.
-    $settings->add(new admin_setting_configselect('local_mrca/report_payload',
+    $settings->add(new admin_setting_configselect(
+        'local_mrca/report_payload',
         get_string('report_payload', 'local_mrca'),
         get_string('report_payload_desc', 'local_mrca'),
-        'full', [
+        'full',
+        [
         'full' => get_string('report_payload_full', 'local_mrca'),
         'summary' => get_string('report_payload_summary', 'local_mrca'),
-    ]));
+        ]
+    ));
     $settings->hide_if('local_mrca/report_payload', 'local_mrca/integration_method', 'eq', 'disabled');
 }

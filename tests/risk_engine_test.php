@@ -35,96 +35,87 @@ use local_mrca\engine\risk_engine;
  */
 class risk_engine_test extends \advanced_testcase
 {
-
     /** @var risk_engine */
     private $engine;
 
-    protected function setUp(): void
-    {
+    protected function setUp(): void {
         parent::setUp();
         $this->engine = new risk_engine();
     }
 
     // ==================== Privacy Score Tests ====================
 
-    public function test_privacy_score_no_provider_no_findings(): void
-    {
+    public function test_privacy_score_no_provider_no_findings(): void {
         $score = $this->engine->calculate_privacy_score(
-        ['has_privacy_provider' => false],
-        []
+            ['has_privacy_provider' => false],
+            []
         );
         $this->assertEquals(risk_engine::SCORE_NO_PRIVACY_API, $score);
     }
 
-    public function test_privacy_score_with_provider(): void
-    {
+    public function test_privacy_score_with_provider(): void {
         $score = $this->engine->calculate_privacy_score(
-        ['has_privacy_provider' => true],
-        []
+            ['has_privacy_provider' => true],
+            []
         );
         $this->assertEquals(0, $score);
     }
 
-    public function test_privacy_score_critical_pii_fields(): void
-    {
+    public function test_privacy_score_critical_pii_fields(): void {
         $findings = [
             ['field' => 'user_password', 'is_encrypted' => false],
         ];
         $score = $this->engine->calculate_privacy_score(
-        ['has_privacy_provider' => true],
+            ['has_privacy_provider' => true],
             $findings
         );
         // password field = 35 points (critical).
         $this->assertEquals(35, $score);
     }
 
-    public function test_privacy_score_encrypted_field_reduction(): void
-    {
+    public function test_privacy_score_encrypted_field_reduction(): void {
         $findings = [
             ['field' => 'user_password', 'is_encrypted' => true],
         ];
         $score = $this->engine->calculate_privacy_score(
-        ['has_privacy_provider' => true],
+            ['has_privacy_provider' => true],
             $findings
         );
         // password field (35) * 0.2 = 7.
         $this->assertEquals(7, $score);
     }
 
-    public function test_privacy_score_high_pii_fields(): void
-    {
+    public function test_privacy_score_high_pii_fields(): void {
         $findings = [
             ['field' => 'email_address', 'is_encrypted' => false],
         ];
         $score = $this->engine->calculate_privacy_score(
-        ['has_privacy_provider' => true],
+            ['has_privacy_provider' => true],
             $findings
         );
         // email field = 25 points (high).
         $this->assertEquals(25, $score);
     }
 
-    public function test_privacy_score_medium_pii_fields(): void
-    {
+    public function test_privacy_score_medium_pii_fields(): void {
         $findings = [
             ['field' => 'user_ip', 'is_encrypted' => false],
         ];
         $score = $this->engine->calculate_privacy_score(
-        ['has_privacy_provider' => true],
+            ['has_privacy_provider' => true],
             $findings
         );
         // ip field = 15 points (medium).
         $this->assertEquals(15, $score);
     }
 
-    public function test_privacy_score_capped_at_65(): void
-    {
+    public function test_privacy_score_capped_at_65(): void {
         $findings = [
             ['field' => 'password1', 'is_encrypted' => false],
             ['field' => 'password2', 'is_encrypted' => false],
         ];
         $score = $this->engine->calculate_privacy_score(
-        ['has_privacy_provider' => true],
+            ['has_privacy_provider' => true],
             $findings
         );
         // 35 + 35 = 70, capped at 65.
@@ -133,8 +124,7 @@ class risk_engine_test extends \advanced_testcase
 
     // ==================== Dependency Score Tests ====================
 
-    public function test_dependency_score_clean(): void
-    {
+    public function test_dependency_score_clean(): void {
         $findings = [
             'core_mismatch' => false,
             'missing_dependencies' => [],
@@ -146,8 +136,7 @@ class risk_engine_test extends \advanced_testcase
         $this->assertEquals(0, $score);
     }
 
-    public function test_dependency_score_core_mismatch(): void
-    {
+    public function test_dependency_score_core_mismatch(): void {
         $findings = [
             'core_mismatch' => true,
             'missing_dependencies' => [],
@@ -159,8 +148,7 @@ class risk_engine_test extends \advanced_testcase
         $this->assertEquals(risk_engine::SCORE_CORE_VERSION_MISMATCH, $score);
     }
 
-    public function test_dependency_score_missing_deps_multiplied(): void
-    {
+    public function test_dependency_score_missing_deps_multiplied(): void {
         $findings = [
             'core_mismatch' => false,
             'missing_dependencies' => ['mod_foo', 'mod_bar'],
@@ -172,8 +160,7 @@ class risk_engine_test extends \advanced_testcase
         $this->assertEquals(risk_engine::SCORE_MISSING_DEPENDENCY * 2, $score);
     }
 
-    public function test_dependency_score_deprecated_apis_capped_at_3(): void
-    {
+    public function test_dependency_score_deprecated_apis_capped_at_3(): void {
         $findings = [
             'core_mismatch' => false,
             'missing_dependencies' => [],
@@ -185,8 +172,7 @@ class risk_engine_test extends \advanced_testcase
         $this->assertEquals(risk_engine::SCORE_DEPRECATED_API * 3, $score);
     }
 
-    public function test_dependency_score_capped_at_65(): void
-    {
+    public function test_dependency_score_capped_at_65(): void {
         $findings = [
             'core_mismatch' => true, // 25
             'missing_dependencies' => ['a', 'b', 'c'], // 60
@@ -200,8 +186,7 @@ class risk_engine_test extends \advanced_testcase
 
     // ==================== Capability Score Tests ====================
 
-    public function test_capability_score_clean(): void
-    {
+    public function test_capability_score_clean(): void {
         $findings = [
             'critical_caps_non_admin' => [],
             'suspicious_overrides' => [],
@@ -210,8 +195,7 @@ class risk_engine_test extends \advanced_testcase
         $this->assertEquals(0, $score);
     }
 
-    public function test_capability_score_critical_caps(): void
-    {
+    public function test_capability_score_critical_caps(): void {
         $findings = [
             'critical_caps_non_admin' => [
                 ['capability' => 'moodle/site:config'],
@@ -223,8 +207,7 @@ class risk_engine_test extends \advanced_testcase
         $this->assertEquals(risk_engine::SCORE_CRITICAL_CAP_NON_ADMIN * 2, $score);
     }
 
-    public function test_capability_score_critical_caps_capped_at_3(): void
-    {
+    public function test_capability_score_critical_caps_capped_at_3(): void {
         $findings = [
             'critical_caps_non_admin' => [
                 ['capability' => 'a'],
@@ -242,34 +225,29 @@ class risk_engine_test extends \advanced_testcase
 
     // ==================== Risk Level Tests ====================
 
-    public function test_risk_level_low(): void
-    {
+    public function test_risk_level_low(): void {
         $this->assertEquals('low', $this->engine->get_risk_level(0));
         $this->assertEquals('low', $this->engine->get_risk_level(30));
     }
 
-    public function test_risk_level_medium(): void
-    {
+    public function test_risk_level_medium(): void {
         $this->assertEquals('medium', $this->engine->get_risk_level(31));
         $this->assertEquals('medium', $this->engine->get_risk_level(60));
     }
 
-    public function test_risk_level_high(): void
-    {
+    public function test_risk_level_high(): void {
         $this->assertEquals('high', $this->engine->get_risk_level(61));
         $this->assertEquals('high', $this->engine->get_risk_level(80));
     }
 
-    public function test_risk_level_critical(): void
-    {
+    public function test_risk_level_critical(): void {
         $this->assertEquals('critical', $this->engine->get_risk_level(81));
         $this->assertEquals('critical', $this->engine->get_risk_level(200));
     }
 
     // ==================== Plugin Risk Total ====================
 
-    public function test_plugin_risk_total(): void
-    {
+    public function test_plugin_risk_total(): void {
         $total = $this->engine->calculate_plugin_risk(30, 20, 10);
         $this->assertEquals(60, $total);
     }

@@ -33,7 +33,6 @@ use core_plugin_manager;
 use xmldb_file;
 
 class privacy_scanner {
-
     /** @var array Keywords that might indicate PII. */
     private const PII_KEYWORDS = [
         'email', 'phone', 'mobile', 'address', 'city', 'country',
@@ -149,8 +148,10 @@ class privacy_scanner {
      * @param \local_mrca\heuristics\crypto_analyzer $crypto_analyzer
      * @return array Enriched suspicious fields with 'is_encrypted' flag.
      */
-    public function check_content_analysis(array $suspicious_fields,
-            \local_mrca\heuristics\crypto_analyzer $crypto_analyzer): array {
+    public function check_content_analysis(
+        array $suspicious_fields,
+        \local_mrca\heuristics\crypto_analyzer $crypto_analyzer
+    ): array {
         global $DB;
 
         foreach ($suspicious_fields as &$finding) {

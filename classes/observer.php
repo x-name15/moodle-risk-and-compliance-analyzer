@@ -27,7 +27,6 @@ namespace local_mrca;
 defined('MOODLE_INTERNAL') || die();
 
 class observer {
-
     /**
      * Observer for \core\event\plugin_enabled.
      * Triggers a scan if the setting is enabled.

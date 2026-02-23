@@ -28,7 +28,7 @@ require_once(__DIR__ . '/../../../config.php');
 
 require_once($CFG->libdir . '/clilib.php');
 
-list($options, $unrecognised) = cli_get_params(['help' => false], ['h' => 'help']);
+[$options, $unrecognised] = cli_get_params(['help' => false], ['h' => 'help']);
 
 if ($options['help']) {
     echo "MRCA — Moodle Risk & Compliance Analyzer CLI Scan

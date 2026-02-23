@@ -32,8 +32,7 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @return bool
  */
-function xmldb_local_mrca_uninstall()
-{
+function xmldb_local_mrca_uninstall() {
     // Remove all plugin settings.
     $settings = [
         'autoscan_new_plugins',

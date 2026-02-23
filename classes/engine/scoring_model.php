@@ -27,7 +27,6 @@ namespace local_mrca\engine;
 defined('MOODLE_INTERNAL') || die();
 
 class scoring_model {
-
     /** @var float Correlation multiplier when both plugin and role risk exceed thresholds. */
     const CORRELATION_MULTIPLIER = 1.5;
 
@@ -108,11 +107,11 @@ class scoring_model {
     public function classify_site_risk(float $index): string {
         if ($index <= 20) {
             return 'healthy';
-        } elseif ($index <= 40) {
+        } else if ($index <= 40) {
             return 'low';
-        } elseif ($index <= 60) {
+        } else if ($index <= 60) {
             return 'moderate';
-        } elseif ($index <= 80) {
+        } else if ($index <= 80) {
             return 'high';
         } else {
             return 'critical';

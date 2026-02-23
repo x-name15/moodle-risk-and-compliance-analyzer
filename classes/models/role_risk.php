@@ -27,7 +27,6 @@ namespace local_mrca\models;
 defined('MOODLE_INTERNAL') || die();
 
 class role_risk {
-
     /** @var int */
     public $id;
     /** @var int */

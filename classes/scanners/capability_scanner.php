@@ -30,7 +30,6 @@ namespace local_mrca\scanners;
 defined('MOODLE_INTERNAL') || die();
 
 class capability_scanner {
-
     /** @var array Critical core capabilities from REBRAND.MD §4.3. */
     private const CRITICAL_CAPABILITIES = [
         'moodle/site:config',
@@ -151,10 +150,10 @@ class capability_scanner {
             if ($data['critical_cap_count'] >= 8) {
                 $risk_class = 'danger';
                 $risk_emoji = '🔴';
-            } elseif ($data['critical_cap_count'] >= 3) {
+            } else if ($data['critical_cap_count'] >= 3) {
                 $risk_class = 'warning';
                 $risk_emoji = '🟠';
-            } elseif ($data['critical_cap_count'] >= 1) {
+            } else if ($data['critical_cap_count'] >= 1) {
                 $risk_class = 'info';
                 $risk_emoji = '🟡';
             }
@@ -170,7 +169,7 @@ class capability_scanner {
         }
 
         // Sort by risk score descending.
-        usort($heatmap, function($a, $b) {
+        usort($heatmap, function ($a, $b) {
             return $b['risk_score'] - $a['risk_score'];
         });
 

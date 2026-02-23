@@ -33,7 +33,6 @@ use core_plugin_manager;
 
 class core_plugin_helper
 {
-
     /** @var array|null Cache of standard plugins list. */
     private static $standard_plugins_cache = null;
 
@@ -46,8 +45,7 @@ class core_plugin_helper
      * @param string $component Component name (e.g. 'mod_forum', 'block_html').
      * @return bool True if the plugin is a standard Moodle plugin.
      */
-    public static function is_core_plugin(string $component): bool
-    {
+    public static function is_core_plugin(string $component): bool {
         // Core subsystems (e.g. 'core', 'core_course') are always core.
         if (strpos($component, 'core') === 0) {
             return true;
@@ -74,8 +72,7 @@ class core_plugin_helper
      * @param string $type Plugin type (e.g. 'mod', 'block', 'auth').
      * @return array List of standard plugin names for this type.
      */
-    private static function get_standard_plugins(string $type): array
-    {
+    private static function get_standard_plugins(string $type): array {
         if (self::$standard_plugins_cache === null) {
             self::$standard_plugins_cache = [];
         }
@@ -91,8 +88,7 @@ class core_plugin_helper
     /**
      * Resets the internal cache. Useful for testing.
      */
-    public static function reset_cache(): void
-    {
+    public static function reset_cache(): void {
         self::$standard_plugins_cache = null;
     }
 }

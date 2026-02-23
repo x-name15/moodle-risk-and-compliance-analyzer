@@ -35,53 +35,44 @@ use local_mrca\util\core_plugin_helper;
  */
 class core_plugin_helper_test extends \advanced_testcase
 {
-
-    protected function setUp(): void
-    {
+    protected function setUp(): void {
         parent::setUp();
         core_plugin_helper::reset_cache();
     }
 
-    public function test_core_module_detected(): void
-    {
+    public function test_core_module_detected(): void {
         $this->assertTrue(core_plugin_helper::is_core_plugin('mod_forum'));
         $this->assertTrue(core_plugin_helper::is_core_plugin('mod_assign'));
         $this->assertTrue(core_plugin_helper::is_core_plugin('mod_quiz'));
     }
 
-    public function test_core_block_detected(): void
-    {
+    public function test_core_block_detected(): void {
         $this->assertTrue(core_plugin_helper::is_core_plugin('block_html'));
         $this->assertTrue(core_plugin_helper::is_core_plugin('block_navigation'));
     }
 
-    public function test_core_auth_detected(): void
-    {
+    public function test_core_auth_detected(): void {
         $this->assertTrue(core_plugin_helper::is_core_plugin('auth_manual'));
         $this->assertTrue(core_plugin_helper::is_core_plugin('auth_email'));
     }
 
-    public function test_core_subsystem_detected(): void
-    {
+    public function test_core_subsystem_detected(): void {
         $this->assertTrue(core_plugin_helper::is_core_plugin('core'));
         $this->assertTrue(core_plugin_helper::is_core_plugin('core_course'));
     }
 
-    public function test_third_party_plugin_not_detected(): void
-    {
+    public function test_third_party_plugin_not_detected(): void {
         // A plugin that doesn't ship with Moodle.
         $this->assertFalse(core_plugin_helper::is_core_plugin('mod_nonexistent_xyzzy'));
         $this->assertFalse(core_plugin_helper::is_core_plugin('local_mrca'));
     }
 
-    public function test_invalid_component_format(): void
-    {
+    public function test_invalid_component_format(): void {
         $this->assertFalse(core_plugin_helper::is_core_plugin(''));
         $this->assertFalse(core_plugin_helper::is_core_plugin('nounderscore'));
     }
 
-    public function test_cache_reset(): void
-    {
+    public function test_cache_reset(): void {
         // First call populates cache.
         core_plugin_helper::is_core_plugin('mod_forum');
         // Reset should clear it.

@@ -29,7 +29,6 @@ defined('MOODLE_INTERNAL') || die();
 use core\task\adhoc_task;
 
 class scan_adhoc extends adhoc_task {
-
     /**
      * Execute the task.
      */

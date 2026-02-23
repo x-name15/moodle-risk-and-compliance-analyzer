@@ -17,12 +17,6 @@
 /**
  * Correlation engine — systemic risk layer per REBRAND.MD §4.4.
  *
- * Correlates plugin risk, privacy exposure, capability definitions,
- * role assignments, and dependency instability to detect systemic risk.
- *
- * Rules evaluate cross-layer combinations to identify risks that
- * individual scanners cannot detect in isolation.
- *
  * @package    local_mrca
  * @copyright  2026 Mr Jacket
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -30,12 +24,17 @@
 
 namespace local_mrca\engine;
 
-defined('MOODLE_INTERNAL') || die();
-
+/**
+ * Correlates plugin risk, privacy exposure, capability definitions,
+ * role assignments, and dependency instability to detect systemic risk.
+ *
+ * @package    local_mrca
+ * @copyright  2026 Mr Jacket
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class correlation_engine {
-
-    /** @var scoring_model */
-    private $scoring_model;
+    /** @var scoring_model The scoring model instance. */
+    private $scoringmodel;
 
     /** @var int Threshold for triggering systemic risk alerts. */
     const RISK_THRESHOLD = 40;
@@ -44,49 +43,48 @@ class correlation_engine {
      * Constructor.
      */
     public function __construct() {
-        $this->scoring_model = new scoring_model();
+        $this->scoringmodel = new scoring_model();
     }
 
     /**
      * Evaluates all correlation rules and generates alerts.
      *
-     * @param array $plugin_risks Array of plugin risk data indexed by component.
-     * @param array $role_risks Array of role risk data indexed by roleid.
+     * @param array $pluginrisks Array of plugin risk data indexed by component.
+     * @param array $rolerisks Array of role risk data indexed by roleid.
      * @param int $scanid Current scan ID.
      * @return array List of alert records to insert.
      */
-    public function evaluate(array $plugin_risks, array $role_risks, int $scanid): array {
+    public function evaluate(array $pluginrisks, array $rolerisks, int $scanid): array {
         $alerts = [];
 
         // Run all correlation rules.
-        $alerts = array_merge($alerts, $this->rule_privacy_capability($plugin_risks, $scanid));
-        $alerts = array_merge($alerts, $this->rule_high_risk_unstable_deps($plugin_risks, $scanid));
-        $alerts = array_merge($alerts, $this->rule_systemic_failure($plugin_risks, $role_risks, $scanid));
-        $alerts = array_merge($alerts, $this->rule_outdated_with_pii($plugin_risks, $scanid));
-        $alerts = array_merge($alerts, $this->rule_structural_privacy_gap($plugin_risks, $scanid));
-        $alerts = array_merge($alerts, $this->rule_multi_role_escalation($role_risks, $scanid));
-        $alerts = array_merge($alerts, $this->rule_deprecated_with_exposure($plugin_risks, $scanid));
+        $alerts = array_merge($alerts, $this->rule_privacy_capability($pluginrisks, $scanid));
+        $alerts = array_merge($alerts, $this->rule_high_risk_unstable_deps($pluginrisks, $scanid));
+        $alerts = array_merge($alerts, $this->rule_systemic_failure($pluginrisks, $rolerisks, $scanid));
+        $alerts = array_merge($alerts, $this->rule_outdated_with_pii($pluginrisks, $scanid));
+        $alerts = array_merge($alerts, $this->rule_structural_privacy_gap($pluginrisks, $scanid));
+        $alerts = array_merge($alerts, $this->rule_multi_role_escalation($rolerisks, $scanid));
+        $alerts = array_merge($alerts, $this->rule_deprecated_with_exposure($pluginrisks, $scanid));
 
         return $alerts;
     }
 
     /**
      * Rule 1: High privacy risk + no Privacy API + defines capabilities.
-     * A plugin that stores PII without proper privacy controls AND defines
-     * capabilities is a data exposure risk through permission inheritance.
      *
-     * @param array $plugin_risks Plugin risk data.
+     * @param array $pluginrisks Plugin risk data.
      * @param int $scanid Scan ID.
      * @return array
      */
-    private function rule_privacy_capability(array $plugin_risks, int $scanid): array {
+    private function rule_privacy_capability(array $pluginrisks, int $scanid): array {
         $alerts = [];
 
-        foreach ($plugin_risks as $component => $data) {
-            if (($data['privacy_score'] ?? 0) >= 30 &&
+        foreach ($pluginrisks as $component => $data) {
+            if (
+                ($data['privacy_score'] ?? 0) >= 30 &&
                 empty($data['has_privacy_provider']) &&
-                ($data['capability_score'] ?? 0) > 0) {
-
+                ($data['capability_score'] ?? 0) > 0
+            ) {
                 $alerts[] = $this->create_alert(
                     $scanid,
                     'correlation',
@@ -102,17 +100,15 @@ class correlation_engine {
 
     /**
      * Rule 2: Plugin has high total risk AND unstable dependencies.
-     * High-risk plugins with dependency problems are likely to cause
-     * breakage during Moodle upgrades.
      *
-     * @param array $plugin_risks Plugin risk data.
+     * @param array $pluginrisks Plugin risk data.
      * @param int $scanid Scan ID.
      * @return array
      */
-    private function rule_high_risk_unstable_deps(array $plugin_risks, int $scanid): array {
+    private function rule_high_risk_unstable_deps(array $pluginrisks, int $scanid): array {
         $alerts = [];
 
-        foreach ($plugin_risks as $component => $data) {
+        foreach ($pluginrisks as $component => $data) {
             $total = ($data['privacy_score'] ?? 0) +
                      ($data['dependency_score'] ?? 0) +
                      ($data['capability_score'] ?? 0);
@@ -133,25 +129,23 @@ class correlation_engine {
 
     /**
      * Rule 3: Roles with high risk + plugins with high risk → systemic risk.
-     * When both a risky plugin and a risky role exist simultaneously,
-     * the probability of a security incident is multiplicatively higher.
      *
-     * @param array $plugin_risks Plugin risk data.
-     * @param array $role_risks Role risk data.
+     * @param array $pluginrisks Plugin risk data.
+     * @param array $rolerisks Role risk data.
      * @param int $scanid Scan ID.
      * @return array
      */
-    private function rule_systemic_failure(array $plugin_risks, array $role_risks, int $scanid): array {
+    private function rule_systemic_failure(array $pluginrisks, array $rolerisks, int $scanid): array {
         $alerts = [];
 
-        foreach ($role_risks as $roleid => $role_data) {
-            if (($role_data['risk_score'] ?? 0) >= self::RISK_THRESHOLD) {
-                foreach ($plugin_risks as $component => $plugin_data) {
-                    $plugin_score = ($plugin_data['privacy_score'] ?? 0) +
-                                    ($plugin_data['dependency_score'] ?? 0) +
-                                    ($plugin_data['capability_score'] ?? 0);
+        foreach ($rolerisks as $roleid => $roledata) {
+            if (($roledata['risk_score'] ?? 0) >= self::RISK_THRESHOLD) {
+                foreach ($pluginrisks as $component => $plugindata) {
+                    $pluginscore = ($plugindata['privacy_score'] ?? 0) +
+                                    ($plugindata['dependency_score'] ?? 0) +
+                                    ($plugindata['capability_score'] ?? 0);
 
-                    if ($plugin_score >= self::RISK_THRESHOLD) {
+                    if ($pluginscore >= self::RISK_THRESHOLD) {
                         $alerts[] = $this->create_alert(
                             $scanid,
                             'correlation',
@@ -173,22 +167,20 @@ class correlation_engine {
 
     /**
      * Rule 4: Outdated dependencies + PII fields → amplified risk.
-     * Plugins with PII that haven't been updated are likely to have
-     * unpatched security vulnerabilities affecting personal data.
      *
-     * @param array $plugin_risks Plugin risk data.
+     * @param array $pluginrisks Plugin risk data.
      * @param int $scanid Scan ID.
      * @return array
      */
-    private function rule_outdated_with_pii(array $plugin_risks, int $scanid): array {
+    private function rule_outdated_with_pii(array $pluginrisks, int $scanid): array {
         $alerts = [];
 
-        foreach ($plugin_risks as $component => $data) {
-            $dep_findings = $data['dep_findings'] ?? [];
-            $is_outdated = !empty($dep_findings['outdated']) || !empty($dep_findings['no_recent_update']);
-            $has_pii = ($data['privacy_score'] ?? 0) >= 20;
+        foreach ($pluginrisks as $component => $data) {
+            $depfindings = $data['dep_findings'] ?? [];
+            $isoutdated = !empty($depfindings['outdated']) || !empty($depfindings['no_recent_update']);
+            $haspii = ($data['privacy_score'] ?? 0) >= 20;
 
-            if ($is_outdated && $has_pii) {
+            if ($isoutdated && $haspii) {
                 $alerts[] = $this->create_alert(
                     $scanid,
                     'correlation',
@@ -204,22 +196,19 @@ class correlation_engine {
 
     /**
      * Rule 5: Structural issues + privacy gaps → compliance alert.
-     * Plugins with poor code structure (no tests, missing maturity)
-     * AND privacy gaps indicate a compliance risk — the plugin
-     * is likely unmaintained and non-compliant.
      *
-     * @param array $plugin_risks Plugin risk data.
+     * @param array $pluginrisks Plugin risk data.
      * @param int $scanid Scan ID.
      * @return array
      */
-    private function rule_structural_privacy_gap(array $plugin_risks, int $scanid): array {
+    private function rule_structural_privacy_gap(array $pluginrisks, int $scanid): array {
         $alerts = [];
 
-        foreach ($plugin_risks as $component => $data) {
-            $structural_score = $data['structural_score'] ?? 0;
-            $privacy_score = $data['privacy_score'] ?? 0;
+        foreach ($pluginrisks as $component => $data) {
+            $structuralscore = $data['structural_score'] ?? 0;
+            $privacyscore = $data['privacy_score'] ?? 0;
 
-            if ($structural_score >= 15 && $privacy_score >= 25 && empty($data['has_privacy_provider'])) {
+            if ($structuralscore >= 15 && $privacyscore >= 25 && empty($data['has_privacy_provider'])) {
                 $alerts[] = $this->create_alert(
                     $scanid,
                     'correlation',
@@ -235,31 +224,31 @@ class correlation_engine {
 
     /**
      * Rule 6: Multi-role escalation detection.
-     * If 3 or more non-admin roles have critical capabilities,
-     * it suggests a systemic misconfiguration of the permission model.
      *
-     * @param array $role_risks Role risk data.
+     * @param array $rolerisks Role risk data.
      * @param int $scanid Scan ID.
      * @return array
      */
-    private function rule_multi_role_escalation(array $role_risks, int $scanid): array {
+    private function rule_multi_role_escalation(array $rolerisks, int $scanid): array {
         $alerts = [];
 
-        $dangerous_roles = 0;
-        foreach ($role_risks as $roleid => $data) {
-            if (($data['critical_cap_count'] ?? 0) >= 3 &&
-                !in_array($data['role_shortname'] ?? '', ['manager', 'admin'])) {
-                $dangerous_roles++;
+        $dangerousroles = 0;
+        foreach ($rolerisks as $roleid => $data) {
+            if (
+                ($data['critical_cap_count'] ?? 0) >= 3 &&
+                !in_array($data['role_shortname'] ?? '', ['manager', 'admin'])
+            ) {
+                $dangerousroles++;
             }
         }
 
-        if ($dangerous_roles >= 3) {
+        if ($dangerousroles >= 3) {
             $alerts[] = $this->create_alert(
                 $scanid,
                 'capability',
                 'critical',
                 '',
-                get_string('alert_multi_role_escalation', 'local_mrca', $dangerous_roles)
+                get_string('alert_multi_role_escalation', 'local_mrca', $dangerousroles)
             );
         }
 
@@ -268,21 +257,19 @@ class correlation_engine {
 
     /**
      * Rule 7: Deprecated code usage + data exposure.
-     * Plugins using deprecated functions AND having PII exposure
-     * suggest an unmaintained plugin handling sensitive data.
      *
-     * @param array $plugin_risks Plugin risk data.
+     * @param array $pluginrisks Plugin risk data.
      * @param int $scanid Scan ID.
      * @return array
      */
-    private function rule_deprecated_with_exposure(array $plugin_risks, int $scanid): array {
+    private function rule_deprecated_with_exposure(array $pluginrisks, int $scanid): array {
         $alerts = [];
 
-        foreach ($plugin_risks as $component => $data) {
-            $has_deprecated = ($data['deprecated_calls'] ?? 0) > 0;
-            $has_exposure = ($data['privacy_score'] ?? 0) >= 20 && empty($data['has_privacy_provider']);
+        foreach ($pluginrisks as $component => $data) {
+            $hasdeprecated = ($data['deprecated_calls'] ?? 0) > 0;
+            $hasexposure = ($data['privacy_score'] ?? 0) >= 20 && empty($data['has_privacy_provider']);
 
-            if ($has_deprecated && $has_exposure) {
+            if ($hasdeprecated && $hasexposure) {
                 $alerts[] = $this->create_alert(
                     $scanid,
                     'correlation',
@@ -306,8 +293,13 @@ class correlation_engine {
      * @param string $description
      * @return \stdClass
      */
-    private function create_alert(int $scanid, string $type, string $severity,
-                                   string $component, string $description): \stdClass {
+    private function create_alert(
+        int $scanid,
+        string $type,
+        string $severity,
+        string $component,
+        string $description
+    ): \stdClass {
         $alert = new \stdClass();
         $alert->scanid = $scanid;
         $alert->type = $type;

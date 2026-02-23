@@ -24,31 +24,31 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$capabilities = array(
+$capabilities = [
 
-    'local/mrca:view' => array(
+    'local/mrca:view' => [
         'captype' => 'read',
         'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
+        'archetypes' => [
             'manager' => CAP_ALLOW,
-        ),
-    ),
+        ],
+    ],
 
-    'local/mrca:configure' => array(
+    'local/mrca:configure' => [
         'captype' => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
         'riskbitmask' => RISK_CONFIG,
-        'archetypes' => array(
+        'archetypes' => [
             'manager' => CAP_ALLOW,
-        ),
-    ),
+        ],
+    ],
 
-    'local/mrca:manage_scans' => array(
+    'local/mrca:manage_scans' => [
         'captype' => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
         'riskbitmask' => RISK_CONFIG,
-        'archetypes' => array(
+        'archetypes' => [
             'manager' => CAP_ALLOW,
-        ),
-    ),
-);
+        ],
+    ],
+];

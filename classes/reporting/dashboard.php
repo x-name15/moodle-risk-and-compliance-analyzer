@@ -35,7 +35,6 @@ use templatable;
 use renderer_base;
 
 class dashboard implements renderable, templatable {
-
     /**
      * Exports data for the Mustache template.
      *
@@ -194,9 +193,9 @@ class dashboard implements renderable, templatable {
             $badge_class = 'success';
             if ($level === 'critical') {
                 $badge_class = 'danger';
-            } elseif ($level === 'high') {
+            } else if ($level === 'high') {
                 $badge_class = 'danger';
-            } elseif ($level === 'medium') {
+            } else if ($level === 'medium') {
                 $badge_class = 'warning';
             }
 
@@ -264,8 +263,14 @@ class dashboard implements renderable, templatable {
      * @return array Updated data.
      */
     private function add_top_plugins(array $data, $DB, \stdClass $scan): array {
-        $top = $DB->get_records('local_mrca_plugin_risks', ['scanid' => $scan->id],
-            'total_score DESC', '*', 0, 5);
+        $top = $DB->get_records(
+            'local_mrca_plugin_risks',
+            ['scanid' => $scan->id],
+            'total_score DESC',
+            '*',
+            0,
+            5
+        );
 
         $engine = new \local_mrca\engine\risk_engine();
 
@@ -301,8 +306,14 @@ class dashboard implements renderable, templatable {
      * @return array Updated data.
      */
     private function add_top_roles(array $data, $DB, \stdClass $scan): array {
-        $top = $DB->get_records('local_mrca_role_risks', ['scanid' => $scan->id],
-            'risk_score DESC', '*', 0, 5);
+        $top = $DB->get_records(
+            'local_mrca_role_risks',
+            ['scanid' => $scan->id],
+            'risk_score DESC',
+            '*',
+            0,
+            5
+        );
 
         foreach ($top as $rr) {
             if ($rr->risk_score <= 0) {
@@ -316,9 +327,9 @@ class dashboard implements renderable, templatable {
             $badge = 'success';
             if ($rr->critical_cap_count >= 8) {
                 $badge = 'danger';
-            } elseif ($rr->critical_cap_count >= 3) {
+            } else if ($rr->critical_cap_count >= 3) {
                 $badge = 'warning';
-            } elseif ($rr->critical_cap_count >= 1) {
+            } else if ($rr->critical_cap_count >= 1) {
                 $badge = 'info';
             }
 
@@ -423,10 +434,10 @@ class dashboard implements renderable, templatable {
             if ($rr->critical_cap_count >= 8) {
                 $heatmap_class = 'danger';
                 $emoji = '🔴';
-            } elseif ($rr->critical_cap_count >= 3) {
+            } else if ($rr->critical_cap_count >= 3) {
                 $heatmap_class = 'warning';
                 $emoji = '🟠';
-            } elseif ($rr->critical_cap_count >= 1) {
+            } else if ($rr->critical_cap_count >= 1) {
                 $heatmap_class = 'info';
                 $emoji = '🟡';
             }
@@ -459,7 +470,7 @@ class dashboard implements renderable, templatable {
             $alert_badge = 'info';
             if ($alert->severity === 'critical') {
                 $alert_badge = 'danger';
-            } elseif ($alert->severity === 'high') {
+            } else if ($alert->severity === 'high') {
                 $alert_badge = 'warning';
             }
 

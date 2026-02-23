@@ -27,7 +27,6 @@ namespace local_mrca\manager;
 defined('MOODLE_INTERNAL') || die();
 
 class whitelist_manager {
-
     /**
      * Adds a field to the whitelist.
      *

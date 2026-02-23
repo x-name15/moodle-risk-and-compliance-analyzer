@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2026-02-23
+
+### Fixed
+- **Scanners:** Fixed a false-positive issue where "ghost plugins" (plugins with records in the database but removed from the file system) were incorrectly flagged with high structural and privacy risks. The scanner now properly ignores plugins without a valid physical directory (Thanks to @ewallah).
+- **Code Quality:** Massive refactoring to meet Moodle's strict coding standards (Moodle CS). Resolved over 150+ code style violations, removed underscores from local variables, added missing docblocks, and significantly reduced cyclomatic complexity in the main scanning engine (`run_scan`).
+
 ## [1.0.0] - 2026-02-20
 
 ### Initial Stable Release

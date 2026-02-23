@@ -40,22 +40,22 @@ if ($action === 'scan' && confirm_sesskey()) {
     $task = new \local_mrca\task\run_scan();
     $task->execute();
     redirect($PAGE->url, get_string('scan_completed', 'local_mrca'));
-} elseif ($action === 'download_pdf' && confirm_sesskey()) {
+} else if ($action === 'download_pdf' && confirm_sesskey()) {
     $scanid = required_param('scanid', PARAM_INT);
     $generator = new \local_mrca\reporting\pdf_generator();
     $generator->generate_report($scanid);
     exit;
-} elseif ($action === 'download_csv' && confirm_sesskey()) {
+} else if ($action === 'download_csv' && confirm_sesskey()) {
     $scanid = required_param('scanid', PARAM_INT);
     $generator = new \local_mrca\reporting\csv_generator();
     $generator->generate_report($scanid);
     exit;
-} elseif ($action === 'download_json' && confirm_sesskey()) {
+} else if ($action === 'download_json' && confirm_sesskey()) {
     $scanid = required_param('scanid', PARAM_INT);
     $generator = new \local_mrca\reporting\export_json();
     $generator->generate_report($scanid);
     exit;
-} elseif ($action === 'whitelist_add' && confirm_sesskey()) {
+} else if ($action === 'whitelist_add' && confirm_sesskey()) {
     $component = required_param('component', PARAM_TEXT);
     $table = required_param('table', PARAM_TEXT);
     $field = required_param('field', PARAM_TEXT);
@@ -65,7 +65,7 @@ if ($action === 'scan' && confirm_sesskey()) {
 
     echo json_encode(['success' => true]);
     exit;
-} elseif ($action === 'whitelist_remove' && confirm_sesskey()) {
+} else if ($action === 'whitelist_remove' && confirm_sesskey()) {
     $id = required_param('id', PARAM_INT);
 
     $manager = new \local_mrca\manager\whitelist_manager();
@@ -73,7 +73,7 @@ if ($action === 'scan' && confirm_sesskey()) {
 
     echo json_encode(['success' => true]);
     exit;
-} elseif ($action === 'send_single_report' && confirm_sesskey()) {
+} else if ($action === 'send_single_report' && confirm_sesskey()) {
     // Manually send a single plugin report to integration.
     $resultid = required_param('resultid', PARAM_INT);
     $result = $DB->get_record('local_mrca_scan_results', ['id' => $resultid], '*', MUST_EXIST);
@@ -92,8 +92,10 @@ if ($action === 'scan' && confirm_sesskey()) {
     ];
 
     if ($method === 'mih') {
-        if (\core\component::get_component_directory('local_integrationhub') &&
-                class_exists('\local_integrationhub\mih')) {
+        if (
+            \core\component::get_component_directory('local_integrationhub') &&
+                class_exists('\local_integrationhub\mih')
+        ) {
             $slug = get_config('local_mrca', 'mih_service_slug');
             try {
                 \local_integrationhub\mih::request($slug, '/', $payload, 'POST');
@@ -104,7 +106,7 @@ if ($action === 'scan' && confirm_sesskey()) {
         } else {
             $message = 'MIH not installed/configured.';
         }
-    } elseif ($method === 'webhook') {
+    } else if ($method === 'webhook') {
         $url = get_config('local_mrca', 'webhook_url');
         $token = get_config('local_mrca', 'webhook_token');
         $service = new \local_mrca\service\webhook_service();

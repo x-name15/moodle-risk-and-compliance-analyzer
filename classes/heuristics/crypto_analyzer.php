@@ -27,7 +27,6 @@ namespace local_mrca\heuristics;
 defined('MOODLE_INTERNAL') || die();
 
 class crypto_analyzer {
-
     /**
      * Estimates if a string is likely encrypted or hashed.
      *
@@ -64,8 +63,10 @@ class crypto_analyzer {
         }
 
         // Private Keys.
-        if (strpos($data, 'BEGIN PRIVATE KEY') !== false ||
-            strpos($data, 'BEGIN RSA PRIVATE KEY') !== false) {
+        if (
+            strpos($data, 'BEGIN PRIVATE KEY') !== false ||
+            strpos($data, 'BEGIN RSA PRIVATE KEY') !== false
+        ) {
             return true;
         }
 

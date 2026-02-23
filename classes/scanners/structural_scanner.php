@@ -17,9 +17,6 @@
 /**
  * Structural scanner — plugin code structure and quality analysis.
  *
- * Analyzes plugin file organization, detects deprecated function usage,
- * validates version metadata, and checks coding standards compliance.
- *
  * @package    local_mrca
  * @copyright  2026 Mr Jacket
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -27,11 +24,15 @@
 
 namespace local_mrca\scanners;
 
-defined('MOODLE_INTERNAL') || die();
-
-class structural_scanner
-{
-
+/**
+ * Analyzes plugin file organization, detects deprecated function usage,
+ * validates version metadata, and checks coding standards compliance.
+ *
+ * @package    local_mrca
+ * @copyright  2026 Mr Jacket
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class structural_scanner {
     /** @var int Score for missing version.php. */
     const SCORE_NO_VERSION_FILE = 15;
 
@@ -96,8 +97,7 @@ class structural_scanner
      * @param string $component Component name.
      * @return array Structural findings with score.
      */
-    public function scan(string $component): array
-    {
+    public function scan(string $component): array {
         $findings = [
             'has_version_file' => false,
             'has_db_schema' => false,
@@ -122,6 +122,31 @@ class structural_scanner
         $score = 0;
 
         // 1. File structure checks.
+        $this->check_base_structure($dir, $findings, $score);
+
+        // 2. Check version.php for maturity and legacy cron.
+        if ($findings['has_version_file']) {
+            $this->check_version_metadata($dir, $findings, $score);
+        }
+
+        // 3. Scan PHP source files for deprecated/unsafe function calls.
+        $this->scan_php_sources($dir, $findings, $score);
+
+        // Cap total structural score at 65.
+        $findings['structural_score'] = min($score, 65);
+
+        return $findings;
+    }
+
+    /**
+     * Checks basic file structure of the plugin.
+     *
+     * @param string $dir Plugin directory.
+     * @param array &$findings Findings array passed by reference.
+     * @param int &$score Risk score passed by reference.
+     * @return void
+     */
+    private function check_base_structure(string $dir, array &$findings, int &$score): void {
         $findings['has_version_file'] = file_exists($dir . '/version.php');
         if (!$findings['has_version_file']) {
             $score += self::SCORE_NO_VERSION_FILE;
@@ -146,34 +171,49 @@ class structural_scanner
             $score += self::SCORE_NO_TESTS;
             $findings['issues'][] = get_string('structural_no_tests', 'local_mrca');
         }
+    }
 
-        // 2. Check version.php for maturity and legacy cron.
-        if ($findings['has_version_file']) {
-            $version_content = @file_get_contents($dir . '/version.php');
-            if ($version_content !== false) {
-                // Maturity check.
-                if (strpos($version_content, '$plugin->maturity') !== false) {
-                    $findings['has_maturity'] = true;
-                }
-                else {
-                    $score += self::SCORE_NO_MATURITY;
-                    $findings['issues'][] = get_string('structural_no_maturity', 'local_mrca');
-                }
+    /**
+     * Validates metadata inside version.php.
+     *
+     * @param string $dir Plugin directory.
+     * @param array &$findings Findings array passed by reference.
+     * @param int &$score Risk score passed by reference.
+     * @return void
+     */
+    private function check_version_metadata(string $dir, array &$findings, int &$score): void {
+        $versioncontent = @file_get_contents($dir . '/version.php');
+        if ($versioncontent !== false) {
+            // Maturity check.
+            if (strpos($versioncontent, '$plugin->maturity') !== false) {
+                $findings['has_maturity'] = true;
+            } else {
+                $score += self::SCORE_NO_MATURITY;
+                $findings['issues'][] = get_string('structural_no_maturity', 'local_mrca');
+            }
 
-                // Legacy cron check.
-                if (strpos($version_content, '$plugin->cron') !== false) {
-                    $findings['uses_legacy_cron'] = true;
-                    $score += self::SCORE_LEGACY_CRON;
-                    $findings['issues'][] = get_string('structural_legacy_cron', 'local_mrca');
-                }
+            // Legacy cron check.
+            if (strpos($versioncontent, '$plugin->cron') !== false) {
+                $findings['uses_legacy_cron'] = true;
+                $score += self::SCORE_LEGACY_CRON;
+                $findings['issues'][] = get_string('structural_legacy_cron', 'local_mrca');
             }
         }
+    }
 
-        // 3. Scan PHP source files for deprecated/unsafe function calls.
-        $php_files = $this->get_php_files($dir);
-        $deprecated_score = 0;
+    /**
+     * Scans PHP files for deprecated and unsafe function calls.
+     *
+     * @param string $dir Plugin directory.
+     * @param array &$findings Findings array passed by reference.
+     * @param int &$score Risk score passed by reference.
+     * @return void
+     */
+    private function scan_php_sources(string $dir, array &$findings, int &$score): void {
+        $phpfiles = $this->get_php_files($dir);
+        $deprecatedscore = 0;
 
-        foreach ($php_files as $file) {
+        foreach ($phpfiles as $file) {
             $content = @file_get_contents($file);
             if ($content === false) {
                 continue;
@@ -189,7 +229,7 @@ class structural_scanner
                         'function' => $func,
                         'reason' => $reason,
                     ];
-                    $deprecated_score += self::SCORE_DEPRECATED_CALL;
+                    $deprecatedscore += self::SCORE_DEPRECATED_CALL;
                 }
             }
 
@@ -201,18 +241,13 @@ class structural_scanner
                         'function' => $func,
                         'reason' => $reason,
                     ];
-                    $deprecated_score += self::SCORE_DEPRECATED_CALL;
+                    $deprecatedscore += self::SCORE_DEPRECATED_CALL;
                 }
             }
         }
 
         // Cap deprecated calls score.
-        $score += min($deprecated_score, self::DEPRECATED_CALLS_CAP);
-
-        // Cap total structural score at 65.
-        $findings['structural_score'] = min($score, 65);
-
-        return $findings;
+        $score += min($deprecatedscore, self::DEPRECATED_CALLS_CAP);
     }
 
     /**
@@ -222,8 +257,7 @@ class structural_scanner
      * @param int $depth Current recursion depth.
      * @return array List of absolute file paths.
      */
-    private function get_php_files(string $dir, int $depth = 0): array
-    {
+    private function get_php_files(string $dir, int $depth = 0): array {
         $files = [];
 
         // Limit recursion to avoid scanning massive plugin trees.
@@ -237,8 +271,10 @@ class structural_scanner
         }
 
         foreach ($entries as $entry) {
-            if ($entry === '.' || $entry === '..' || $entry === 'vendor' ||
-            $entry === 'node_modules' || $entry === '.git') {
+            if (
+                $entry === '.' || $entry === '..' || $entry === 'vendor' ||
+                $entry === 'node_modules' || $entry === '.git'
+            ) {
                 continue;
             }
 
@@ -246,8 +282,7 @@ class structural_scanner
 
             if (is_dir($path)) {
                 $files = array_merge($files, $this->get_php_files($path, $depth + 1));
-            }
-            elseif (pathinfo($entry, PATHINFO_EXTENSION) === 'php') {
+            } else if (pathinfo($entry, PATHINFO_EXTENSION) === 'php') {
                 $files[] = $path;
             }
         }
@@ -265,8 +300,7 @@ class structural_scanner
      * @param string $function Function name.
      * @return bool
      */
-    private function contains_function_call(string $content, string $function): bool
-    {
+    private function contains_function_call(string $content, string $function): bool {
         // Pattern: function name followed by opening parenthesis, not preceded by
         // 'function ', '->' or '::' (those would be definitions or method calls on objects).
         $pattern = '/(?<!\w)(?<!->)(?<!::)(?<!function\s)' . preg_quote($function, '/') . '\s*\(/';
@@ -278,22 +312,22 @@ class structural_scanner
 
         // Remove comments to avoid false positives.
         $lines = explode("\n", $content);
-        $in_block_comment = false;
-        $clean_content = '';
+        $inblockcomment = false;
+        $cleancontent = '';
 
         foreach ($lines as $line) {
             $trimmed = ltrim($line);
 
-            if ($in_block_comment) {
+            if ($inblockcomment) {
                 if (strpos($line, '*/') !== false) {
-                    $in_block_comment = false;
+                    $inblockcomment = false;
                 }
                 continue;
             }
 
             if (strpos($trimmed, '/*') === 0 || strpos($trimmed, '/**') === 0) {
                 if (strpos($line, '*/') === false) {
-                    $in_block_comment = true;
+                    $inblockcomment = true;
                 }
                 continue;
             }
@@ -303,9 +337,9 @@ class structural_scanner
                 continue;
             }
 
-            $clean_content .= $line . "\n";
+            $cleancontent .= $line . "\n";
         }
 
-        return (bool)preg_match($pattern, $clean_content);
+        return (bool)preg_match($pattern, $cleancontent);
     }
 }

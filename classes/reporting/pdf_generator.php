@@ -29,7 +29,6 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->libdir . '/pdflib.php');
 
 class pdf_generator {
-
     /**
      * Generates a PDF report for a scan.
      *

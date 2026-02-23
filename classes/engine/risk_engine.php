@@ -30,7 +30,6 @@ namespace local_mrca\engine;
 defined('MOODLE_INTERNAL') || die();
 
 class risk_engine {
-
     // Privacy scoring constants (from REBRAND.MD §4.1).
     const SCORE_NO_PRIVACY_API = 30;
     const SCORE_NO_EXPORT_DELETE = 25;
@@ -74,19 +73,25 @@ class risk_engine {
                 $fieldname = strtolower($finding['field']);
 
                 // Context Weighting.
-                if (strpos($fieldname, 'password') !== false ||
+                if (
+                    strpos($fieldname, 'password') !== false ||
                     strpos($fieldname, 'secret') !== false ||
-                    strpos($fieldname, 'token') !== false) {
+                    strpos($fieldname, 'token') !== false
+                ) {
                     $field_score = 35; // Critical.
-                } elseif (strpos($fieldname, 'email') !== false ||
+                } else if (
+                    strpos($fieldname, 'email') !== false ||
                           strpos($fieldname, 'phone') !== false ||
                           strpos($fieldname, 'mobile') !== false ||
                           strpos($fieldname, 'dni') !== false ||
-                          strpos($fieldname, 'ssn') !== false) {
+                          strpos($fieldname, 'ssn') !== false
+                ) {
                     $field_score = 25; // High.
-                } elseif (strpos($fieldname, 'ip') !== false ||
+                } else if (
+                    strpos($fieldname, 'ip') !== false ||
                           strpos($fieldname, 'address') !== false ||
-                          strpos($fieldname, 'city') !== false) {
+                          strpos($fieldname, 'city') !== false
+                ) {
                     $field_score = 15; // Medium.
                 }
 
@@ -193,9 +198,9 @@ class risk_engine {
     public function get_risk_level(int $score): string {
         if ($score >= 81) {
             return 'critical';
-        } elseif ($score >= 61) {
+        } else if ($score >= 61) {
             return 'high';
-        } elseif ($score >= 31) {
+        } else if ($score >= 31) {
             return 'medium';
         } else {
             return 'low';

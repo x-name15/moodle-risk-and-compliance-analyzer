@@ -27,7 +27,6 @@ namespace local_mrca\reporting;
 defined('MOODLE_INTERNAL') || die();
 
 class csv_generator {
-
     /**
      * Generates a CSV report for a scan.
      *

@@ -27,7 +27,6 @@ namespace local_mrca\models;
 defined('MOODLE_INTERNAL') || die();
 
 class site_risk {
-
     /** @var float Site Risk Index 0-100. */
     public $index;
 
@@ -52,8 +51,12 @@ class site_risk {
      * @param int $roles_scanned Number of roles scanned.
      * @return self
      */
-    public static function calculate(int $total_plugin_risk, int $total_role_risk,
-                                      int $plugins_scanned, int $roles_scanned): self {
+    public static function calculate(
+        int $total_plugin_risk,
+        int $total_role_risk,
+        int $plugins_scanned,
+        int $roles_scanned
+    ): self {
         $model = new \local_mrca\engine\scoring_model();
         $obj = new self();
 

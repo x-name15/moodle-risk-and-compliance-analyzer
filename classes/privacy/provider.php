@@ -43,20 +43,14 @@ use core_privacy\local\request\writer;
  * who whitelist fields during scans. Scan results, risk scores,
  * and alerts are systemic data not tied to individual users.
  */
-class provider implements
-    \core_privacy\local\metadata\provider,
-    \core_privacy\local\request\plugin\provider,
-    \core_privacy\local\request\core_userlist_provider
-{
-
+class provider implements \core_privacy\local\metadata\provider, \core_privacy\local\request\core_userlist_provider, \core_privacy\local\request\plugin\provider {
     /**
      * Describes the user data stored by MRCA.
      *
      * @param collection $collection The collection to add metadata to.
      * @return collection
      */
-    public static function get_metadata(collection $collection): collection
-    {
+    public static function get_metadata(collection $collection): collection {
         $collection->add_database_table('local_mrca_whitelist', [
             'userid' => 'privacy:metadata:whitelist:userid',
             'component' => 'privacy:metadata:whitelist:component',
@@ -74,8 +68,7 @@ class provider implements
      * @param int $userid The user to search.
      * @return contextlist
      */
-    public static function get_contexts_for_userid(int $userid): contextlist
-    {
+    public static function get_contexts_for_userid(int $userid): contextlist {
         $contextlist = new contextlist();
 
         $sql = "SELECT ctx.id
@@ -96,8 +89,7 @@ class provider implements
      *
      * @param userlist $userlist The userlist to populate.
      */
-    public static function get_users_in_context(userlist $userlist): void
-    {
+    public static function get_users_in_context(userlist $userlist): void {
         $context = $userlist->get_context();
 
         if (!$context instanceof \context_system) {
@@ -113,8 +105,7 @@ class provider implements
      *
      * @param approved_contextlist $contextlist The approved contexts to export for.
      */
-    public static function export_user_data(approved_contextlist $contextlist): void
-    {
+    public static function export_user_data(approved_contextlist $contextlist): void {
         global $DB;
 
         $userid = $contextlist->get_user()->id;
@@ -141,7 +132,7 @@ class provider implements
             }
 
             writer::with_context($context)->export_data(
-            [get_string('pluginname', 'local_mrca'), get_string('whitelist', 'local_mrca')],
+                [get_string('pluginname', 'local_mrca'), get_string('whitelist', 'local_mrca')],
                 (object)['whitelist_entries' => $data]
             );
         }
@@ -152,8 +143,7 @@ class provider implements
      *
      * @param \context $context The context to delete data for.
      */
-    public static function delete_data_for_all_users_in_context(\context $context): void
-    {
+    public static function delete_data_for_all_users_in_context(\context $context): void {
         global $DB;
 
         if (!$context instanceof \context_system) {
@@ -168,8 +158,7 @@ class provider implements
      *
      * @param approved_contextlist $contextlist The approved contexts to delete for.
      */
-    public static function delete_data_for_user(approved_contextlist $contextlist): void
-    {
+    public static function delete_data_for_user(approved_contextlist $contextlist): void {
         global $DB;
 
         $userid = $contextlist->get_user()->id;
@@ -188,8 +177,7 @@ class provider implements
      *
      * @param approved_userlist $userlist The approved userlist to delete for.
      */
-    public static function delete_data_for_users(approved_userlist $userlist): void
-    {
+    public static function delete_data_for_users(approved_userlist $userlist): void {
         global $DB;
 
         $context = $userlist->get_context();
@@ -203,7 +191,7 @@ class provider implements
             return;
         }
 
-        list($insql, $inparams) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
+        [$insql, $inparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
         $DB->delete_records_select('local_mrca_whitelist', "userid {$insql}", $inparams);
     }
 }

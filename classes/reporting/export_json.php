@@ -27,7 +27,6 @@ namespace local_mrca\reporting;
 defined('MOODLE_INTERNAL') || die();
 
 class export_json {
-
     /**
      * Generates a JSON report for a scan.
      *

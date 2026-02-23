@@ -27,7 +27,6 @@ namespace local_mrca\service;
 defined('MOODLE_INTERNAL') || die();
 
 class webhook_service {
-
     /**
      * Sends the scan report to a generic webhook.
      *

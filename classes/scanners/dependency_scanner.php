@@ -33,7 +33,6 @@ use core_plugin_manager;
 
 class dependency_scanner
 {
-
     /** @var int Plugins not updated in this many years are flagged. */
     const OUTDATED_THRESHOLD_YEARS = 2;
 
@@ -54,8 +53,7 @@ class dependency_scanner
      * @return array Findings with keys: core_mismatch, missing_dependencies, outdated,
      *               deprecated_apis, no_recent_update, dependency_count, score_details.
      */
-    public function scan(string $component): array
-    {
+    public function scan(string $component): array {
         $findings = [
             'core_mismatch' => false,
             'missing_dependencies' => [],
@@ -130,8 +128,7 @@ class dependency_scanner
      * @param string $dir Plugin directory path.
      * @return array List of deprecated API usages found.
      */
-    private function detect_deprecated_apis(string $dir): array
-    {
+    private function detect_deprecated_apis(string $dir): array {
         $deprecated_found = [];
         $files = $this->get_php_files($dir);
 
@@ -149,8 +146,10 @@ class dependency_scanner
                     $lines = explode("\n", $content);
                     foreach ($lines as $linenum => $line) {
                         $trimmed = ltrim($line);
-                        if (strpos($trimmed, '//') === 0 || strpos($trimmed, '*') === 0 ||
-                        strpos($trimmed, '/*') === 0) {
+                        if (
+                            strpos($trimmed, '//') === 0 || strpos($trimmed, '*') === 0 ||
+                            strpos($trimmed, '/*') === 0
+                        ) {
                             continue;
                         }
                         if (strpos($line, $pattern) !== false) {
@@ -177,8 +176,7 @@ class dependency_scanner
      * @param int $depth Current recursion depth.
      * @return array List of absolute file paths.
      */
-    private function get_php_files(string $dir, int $depth = 0): array
-    {
+    private function get_php_files(string $dir, int $depth = 0): array {
         $files = [];
 
         if ($depth > 4) {
@@ -191,8 +189,10 @@ class dependency_scanner
         }
 
         foreach ($entries as $entry) {
-            if ($entry === '.' || $entry === '..' || $entry === 'vendor' ||
-            $entry === 'node_modules' || $entry === '.git' || $entry === 'tests') {
+            if (
+                $entry === '.' || $entry === '..' || $entry === 'vendor' ||
+                $entry === 'node_modules' || $entry === '.git' || $entry === 'tests'
+            ) {
                 continue;
             }
 
@@ -200,8 +200,7 @@ class dependency_scanner
 
             if (is_dir($path)) {
                 $files = array_merge($files, $this->get_php_files($path, $depth + 1));
-            }
-            elseif (pathinfo($entry, PATHINFO_EXTENSION) === 'php') {
+            } else if (pathinfo($entry, PATHINFO_EXTENSION) === 'php') {
                 $files[] = $path;
             }
         }
