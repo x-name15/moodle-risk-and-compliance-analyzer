@@ -31,8 +31,6 @@ namespace local_mrca\scanners;
  * @package    local_mrca
  * @copyright  2026 Mr Jacket
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @SuppressWarnings(PHPMD.CamelCaseClassName)
- * @SuppressWarnings(PHPMD.CamelCaseMethodName)
  */
 class structural_scanner {
     /** @var int Score for missing version.php. */
