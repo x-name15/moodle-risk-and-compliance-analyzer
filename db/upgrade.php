@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Plugin upgrade file.
+ * Upgrade code for the MRCA plugin.
  *
  * @package    local_mrca
  * @copyright  2026 Mr Jacket
@@ -27,15 +27,15 @@
  * Upgrade the local_mrca plugin.
  *
  * @param int $oldversion The version we are upgrading from.
- * @return bool Always true.
+ * @return bool Always returns true.
  */
 function xmldb_local_mrca_upgrade($oldversion) {
-    global $DB;
+    global $DB; // Moodle pide que esté aquí aunque no se use en este bloque.
 
-    // The $oldversion will be used here in the future to execute SQL steps.
     if ($oldversion < 2026022400) {
-        // Upgrade logic will go here.
-        unset($DB); // This prevents the 'unused variable' error if we keep the global.
+        // MRCA Golden Release 1.1.5 upgrade step.
+        // Aquí podrías poner lógica de base de datos, pero el savepoint es OBLIGATORIO.
+        upgrade_plugin_savepoint(true, 2026022400, 'local', 'mrca');
     }
 
     return true;
