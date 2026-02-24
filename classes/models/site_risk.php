@@ -24,8 +24,15 @@
 
 namespace local_mrca\models;
 
-defined('MOODLE_INTERNAL') || die();
-
+/**
+ * Site risk class.
+ *
+ * Model representing the aggregated risk score for the entire Moodle site.
+ *
+ * @package    local_mrca
+ * @copyright  2026 Mr Jacket
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class site_risk {
     /** @var float Site Risk Index 0-100. */
     public $index;
@@ -34,45 +41,45 @@ class site_risk {
     public $classification;
 
     /** @var int Total risk points. */
-    public $total_risk_points;
+    public $totalriskpoints;
 
     /** @var int Plugins scanned. */
-    public $plugins_scanned;
+    public $pluginsscanned;
 
     /** @var int Roles scanned. */
-    public $roles_scanned;
+    public $rolesscanned;
 
     /**
      * Calculates the site risk from scan data.
      *
-     * @param int $total_plugin_risk Sum of all plugin risk scores.
-     * @param int $total_role_risk Sum of all role risk scores.
-     * @param int $plugins_scanned Number of plugins scanned.
-     * @param int $roles_scanned Number of roles scanned.
+     * @param int $totalpluginrisk Sum of all plugin risk scores.
+     * @param int $totalrolerisk Sum of all role risk scores.
+     * @param int $pluginsscanned Number of plugins scanned.
+     * @param int $rolesscanned Number of roles scanned.
      * @return self
      */
     public static function calculate(
-        int $total_plugin_risk,
-        int $total_role_risk,
-        int $plugins_scanned,
-        int $roles_scanned
+        int $totalpluginrisk,
+        int $totalrolerisk,
+        int $pluginsscanned,
+        int $rolesscanned
     ): self {
         $model = new \local_mrca\engine\scoring_model();
         $obj = new self();
 
-        $obj->total_risk_points = $total_plugin_risk + $total_role_risk;
-        $obj->plugins_scanned = $plugins_scanned;
-        $obj->roles_scanned = $roles_scanned;
+        $obj->totalriskpoints = $totalpluginrisk + $totalrolerisk;
+        $obj->pluginsscanned = $pluginsscanned;
+        $obj->rolesscanned = $rolesscanned;
 
         // Max possible: each plugin could score ~195 (65*3), each role ~65.
         // But realistically we normalize against a reasonable ceiling.
-        $max_plugin = $plugins_scanned * 100; // Reasonable max per plugin.
-        $max_role = $roles_scanned * 65;
-        $max_possible = max($max_plugin + $max_role, 1);
+        $maxplugin = $pluginsscanned * 100; // Reasonable max per plugin.
+        $maxrole = $rolesscanned * 65;
+        $maxpossible = max($maxplugin + $maxrole, 1);
 
         $obj->index = $model->calculate_site_risk_index(
-            (float)$obj->total_risk_points,
-            (float)$max_possible
+            (float)$obj->totalriskpoints,
+            (float)$maxpossible
         );
         $obj->classification = $model->classify_site_risk($obj->index);
 

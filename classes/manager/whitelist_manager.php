@@ -24,16 +24,24 @@
 
 namespace local_mrca\manager;
 
-defined('MOODLE_INTERNAL') || die();
-
+/**
+ * Whitelist manager class.
+ *
+ * Handles the logic for adding, removing, and checking fields that have been
+ * manually marked as safe by an administrator to avoid PII false positives.
+ *
+ * @package    local_mrca
+ * @copyright  2026 Mr Jacket
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class whitelist_manager {
     /**
      * Adds a field to the whitelist.
      *
-     * @param string $component
-     * @param string $table
-     * @param string $field
-     * @param int $userid
+     * @param string $component The component name.
+     * @param string $table The database table name.
+     * @param string $field The field name.
+     * @param int $userid The ID of the user performing the action.
      * @return int The new record ID.
      */
     public function add(string $component, string $table, string $field, int $userid): int {
@@ -57,7 +65,7 @@ class whitelist_manager {
      * Removes a field from the whitelist.
      *
      * @param int $id The whitelist record ID.
-     * @return bool
+     * @return bool True on success, false otherwise.
      */
     public function remove(int $id): bool {
         global $DB;
@@ -67,10 +75,10 @@ class whitelist_manager {
     /**
      * Checks if a field is whitelisted.
      *
-     * @param string $component
-     * @param string $table
-     * @param string $field
-     * @return bool
+     * @param string $component The component name.
+     * @param string $table The database table name.
+     * @param string $field The field name.
+     * @return bool True if whitelisted, false otherwise.
      */
     public function is_whitelisted(string $component, string $table, string $field): bool {
         global $DB;
@@ -84,7 +92,7 @@ class whitelist_manager {
     /**
      * Gets all whitelisted items.
      *
-     * @return array
+     * @return array List of whitelisted records.
      */
     public function get_all(): array {
         global $DB;

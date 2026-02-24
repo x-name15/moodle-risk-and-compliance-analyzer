@@ -24,28 +24,43 @@
 
 namespace local_mrca\reporting;
 
-defined('MOODLE_INTERNAL') || die();
+use core_plugin_manager;
 
+/**
+ * JSON export generator class.
+ *
+ * Processes scan results and generates a downloadable JSON report.
+ *
+ * @package    local_mrca
+ * @copyright  2026 Mr Jacket
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class export_json {
     /**
      * Generates a JSON report for a scan.
      *
-     * @param int $scanid
+     * @param int $scanid The ID of the scan to export.
+     * @return void
      */
     public function generate_report(int $scanid) {
         global $DB;
 
         $scan = $DB->get_record('local_mrca_scans', ['id' => $scanid], '*', MUST_EXIST);
         $results = $DB->get_records('local_mrca_scan_results', ['scanid' => $scanid]);
-        $plugin_risks = $DB->get_records('local_mrca_plugin_risks', ['scanid' => $scanid]);
-        $role_risks = $DB->get_records('local_mrca_role_risks', ['scanid' => $scanid]);
+        $pluginrisks = $DB->get_records('local_mrca_plugin_risks', ['scanid' => $scanid]);
+        $rolerisks = $DB->get_records('local_mrca_role_risks', ['scanid' => $scanid]);
         $alerts = $DB->get_records('local_mrca_alerts', ['scanid' => $scanid]);
+
+        // Get dynamic version from version.php via plugin manager.
+        $pluginman = core_plugin_manager::instance();
+        $plugininfo = $pluginman->get_plugin_info('local_mrca');
+        $release = $plugininfo->release ?? 'unknown';
 
         $engine = new \local_mrca\engine\risk_engine();
 
         $report = [
             'generator' => 'MRCA',
-            'version' => '2.0.0',
+            'version' => $release,
             'scan' => [
                 'id' => $scan->id,
                 'timestamp' => $scan->timecreated,
@@ -70,7 +85,7 @@ class export_json {
             ];
         }
 
-        foreach ($plugin_risks as $pr) {
+        foreach ($pluginrisks as $pr) {
             $report['plugin_risks'][] = [
                 'component' => $pr->component,
                 'privacy_score' => $pr->privacy_score,
@@ -80,7 +95,7 @@ class export_json {
             ];
         }
 
-        foreach ($role_risks as $rr) {
+        foreach ($rolerisks as $rr) {
             $report['role_risks'][] = [
                 'roleid' => $rr->roleid,
                 'risk_score' => $rr->risk_score,

@@ -24,8 +24,15 @@
 
 namespace local_mrca\engine;
 
-defined('MOODLE_INTERNAL') || die();
-
+/**
+ * Scoring model class.
+ *
+ * Handles formal risk computation for plugins, roles, and site index.
+ *
+ * @package    local_mrca
+ * @copyright  2026 Mr Jacket
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class scoring_model {
     /** @var float Correlation multiplier when both plugin and role risk exceed thresholds. */
     const CORRELATION_MULTIPLIER = 1.5;
@@ -38,13 +45,13 @@ class scoring_model {
      *
      * PluginRisk = PrivacyScore + DependencyScore + CapabilityDefinitionScore
      *
-     * @param int $privacy_score
-     * @param int $dependency_score
-     * @param int $capability_score
+     * @param int $privacyscore
+     * @param int $dependencyscore
+     * @param int $capabilityscore
      * @return int
      */
-    public function calculate_plugin_risk(int $privacy_score, int $dependency_score, int $capability_score): int {
-        return $privacy_score + $dependency_score + $capability_score;
+    public function calculate_plugin_risk(int $privacyscore, int $dependencyscore, int $capabilityscore): int {
+        return $privacyscore + $dependencyscore + $capabilityscore;
     }
 
     /**
@@ -52,33 +59,33 @@ class scoring_model {
      *
      * RoleRisk = CriticalCapabilityWeight + OverrideWeight + PluginExposureWeight
      *
-     * @param int $critical_cap_weight Score from critical capabilities.
-     * @param int $override_weight Score from dangerous overrides.
-     * @param int $plugin_exposure_weight Score from plugin exposure linkage.
+     * @param int $criticalcapweight Score from critical capabilities.
+     * @param int $overrideweight Score from dangerous overrides.
+     * @param int $pluginexposureweight Score from plugin exposure linkage.
      * @return int
      */
-    public function calculate_role_risk(int $critical_cap_weight, int $override_weight, int $plugin_exposure_weight): int {
-        return $critical_cap_weight + $override_weight + $plugin_exposure_weight;
+    public function calculate_role_risk(int $criticalcapweight, int $overrideweight, int $pluginexposureweight): int {
+        return $criticalcapweight + $overrideweight + $pluginexposureweight;
     }
 
     /**
      * Applies the correlation multiplier.
      *
      * If both PluginRisk and RoleRisk exceed the threshold:
-     *   FinalRisk = (PluginRisk + RoleRisk) * 1.5
+     * FinalRisk = (PluginRisk + RoleRisk) * 1.5
      * Else:
-     *   FinalRisk = PluginRisk + RoleRisk
+     * FinalRisk = PluginRisk + RoleRisk
      *
-     * @param int $plugin_risk
-     * @param int $role_risk
+     * @param int $pluginrisk
+     * @param int $rolerisk
      * @param int $threshold
      * @return float
      */
-    public function apply_correlation(int $plugin_risk, int $role_risk, int $threshold = self::DEFAULT_THRESHOLD): float {
-        if ($plugin_risk > $threshold && $role_risk > $threshold) {
-            return ($plugin_risk + $role_risk) * self::CORRELATION_MULTIPLIER;
+    public function apply_correlation(int $pluginrisk, int $rolerisk, int $threshold = self::DEFAULT_THRESHOLD): float {
+        if ($pluginrisk > $threshold && $rolerisk > $threshold) {
+            return ($pluginrisk + $rolerisk) * self::CORRELATION_MULTIPLIER;
         }
-        return (float)($plugin_risk + $role_risk);
+        return (float)($pluginrisk + $rolerisk);
     }
 
     /**
@@ -86,15 +93,15 @@ class scoring_model {
      *
      * SiteRiskIndex = (Total Risk Points / Maximum Possible Points) * 100
      *
-     * @param float $total_risk_points Total accumulated risk.
-     * @param float $max_possible_points Maximum theoretical risk for this installation.
+     * @param float $totalriskpoints Total accumulated risk.
+     * @param float $maxpossiblepoints Maximum theoretical risk for this installation.
      * @return float Normalized 0–100.
      */
-    public function calculate_site_risk_index(float $total_risk_points, float $max_possible_points): float {
-        if ($max_possible_points <= 0) {
+    public function calculate_site_risk_index(float $totalriskpoints, float $maxpossiblepoints): float {
+        if ($maxpossiblepoints <= 0) {
             return 0.0;
         }
-        $index = ($total_risk_points / $max_possible_points) * 100;
+        $index = ($totalriskpoints / $maxpossiblepoints) * 100;
         return min(100.0, max(0.0, round($index, 2)));
     }
 

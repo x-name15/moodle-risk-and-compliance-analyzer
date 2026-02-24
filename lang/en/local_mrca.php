@@ -108,6 +108,7 @@ $string['report_title'] = 'MRCA — Risk & Compliance Report';
 $string['report_trigger'] = 'Report trigger';
 $string['report_trigger_always'] = 'Always (after every scan)';
 $string['report_trigger_critical'] = 'Only when critical/high alerts are found';
+$string['report_trigger_desc'] = 'When to dispatch reports to the external integration.';
 $string['risk_critical'] = 'Critical';
 $string['risk_distribution'] = 'Risk Distribution';
 $string['risk_healthy'] = 'Healthy';

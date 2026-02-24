@@ -24,18 +24,26 @@
 
 namespace local_mrca\reporting;
 
-defined('MOODLE_INTERNAL') || die();
-
-require_once($CFG->libdir . '/pdflib.php');
-
+/**
+ * PDF generator class.
+ *
+ * Handles the PDF creation process using Moodle's pdflib for security scan reports.
+ *
+ * @package    local_mrca
+ * @copyright  2026 Mr Jacket
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class pdf_generator {
     /**
      * Generates a PDF report for a scan.
      *
-     * @param int $scanid
+     * @param int $scanid The ID of the scan to export.
+     * @return void
      */
-    public function generate_report(int $scanid) {
-        global $DB;
+    public function generate_report(int $scanid): void {
+        global $DB, $CFG;
+
+        require_once($CFG->libdir . '/pdflib.php');
 
         $scan = $DB->get_record('local_mrca_scans', ['id' => $scanid], '*', MUST_EXIST);
         $results = $DB->get_records('local_mrca_scan_results', ['scanid' => $scanid], 'risk_score DESC');
@@ -55,7 +63,7 @@ class pdf_generator {
         $pdf->Cell(0, 8, get_string('roles_scanned', 'local_mrca') . ': ' . $scan->roles_scanned, 0, 1);
         $pdf->Ln(5);
 
-        // Results table.
+        // Results table header.
         $pdf->SetFont('', 'B', 10);
         $pdf->Cell(90, 7, get_string('plugin', 'local_mrca'), 1);
         $pdf->Cell(30, 7, get_string('risk_score', 'local_mrca'), 1);

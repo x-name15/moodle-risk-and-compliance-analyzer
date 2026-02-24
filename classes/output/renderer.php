@@ -24,15 +24,22 @@
 
 namespace local_mrca\output;
 
-defined('MOODLE_INTERNAL') || die();
-
 use plugin_renderer_base;
 
+/**
+ * Renderer class for the MRCA plugin.
+ *
+ * Handles the output generation by processing renderables and sending them to Mustache templates.
+ *
+ * @package    local_mrca
+ * @copyright  2026 Mr Jacket
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class renderer extends plugin_renderer_base {
     /**
      * Renders the dashboard.
      *
-     * @param \local_mrca\reporting\dashboard $page
+     * @param \local_mrca\reporting\dashboard $page The dashboard renderable object.
      * @return string HTML for the page.
      */
     public function render_dashboard(\local_mrca\reporting\dashboard $page) {

@@ -24,26 +24,38 @@
 
 namespace local_mrca\models;
 
-defined('MOODLE_INTERNAL') || die();
-
+/**
+ * Role risk model class.
+ *
+ * Represents the risk score and findings for a specific Moodle role.
+ *
+ * @package    local_mrca
+ * @copyright  2026 Mr Jacket
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class role_risk {
-    /** @var int */
+    /** @var int Internal ID. */
     public $id;
-    /** @var int */
+
+    /** @var int ID of the associated scan. */
     public $scanid;
-    /** @var int */
+
+    /** @var int The Moodle role ID. */
     public $roleid;
-    /** @var int */
-    public $risk_score;
-    /** @var int */
-    public $critical_cap_count;
-    /** @var int */
+
+    /** @var int Aggregated risk score. */
+    public $riskscore;
+
+    /** @var int Number of critical capabilities detected. */
+    public $criticalcapcount;
+
+    /** @var int Timestamp when record was created. */
     public $timecreated;
 
     /**
-     * Creates from DB record.
+     * Creates instance from DB record.
      *
-     * @param \stdClass $record
+     * @param \stdClass $record The database record.
      * @return self
      */
     public static function from_record(\stdClass $record): self {
@@ -51,14 +63,14 @@ class role_risk {
         $obj->id = $record->id ?? 0;
         $obj->scanid = $record->scanid;
         $obj->roleid = $record->roleid;
-        $obj->risk_score = $record->risk_score ?? 0;
-        $obj->critical_cap_count = $record->critical_cap_count ?? 0;
+        $obj->riskscore = $record->risk_score ?? 0;
+        $obj->criticalcapcount = $record->critical_cap_count ?? 0;
         $obj->timecreated = $record->timecreated ?? time();
         return $obj;
     }
 
     /**
-     * Saves to database.
+     * Saves the role risk record to database.
      *
      * @return int Record ID.
      */
@@ -70,8 +82,8 @@ class role_risk {
         $record = new \stdClass();
         $record->scanid = $this->scanid;
         $record->roleid = $this->roleid;
-        $record->risk_score = $this->risk_score;
-        $record->critical_cap_count = $this->critical_cap_count;
+        $record->risk_score = $this->riskscore;
+        $record->critical_cap_count = $this->criticalcapcount;
         $record->timecreated = $this->timecreated;
         $this->id = $DB->insert_record('local_mrca_role_risks', $record);
         return $this->id;

@@ -74,13 +74,13 @@ class run_scan extends scheduled_task {
         $scan->roles_scanned = 0;
         $scan->id = $DB->insert_record('local_mrca_scans', $scan);
 
-        // ====== LAYER 1: Scan all plugins ======
+        // Layer 1: Scan all plugins.
         $pluginresults = $this->process_plugins($scan, $scancore);
 
-        // ====== LAYER 2: Scan roles ======
+        // Layer 2: Scan roles.
         $roleresults = $this->process_roles($scan);
 
-        // ====== LAYER 3: Correlation engine ======
+        // Layer 3: Correlation engine.
         mtrace("MRCA: Running correlation analysis...");
         $correlationengine = new correlation_engine();
         $alerts = $correlationengine->evaluate($pluginresults['pluginrisks'], $roleresults['rolerisks'], $scan->id);
@@ -89,7 +89,7 @@ class run_scan extends scheduled_task {
             $DB->insert_record('local_mrca_alerts', $alert);
         }
 
-        // ====== LAYER 4: Calculate site risk index ======
+        // Layer 4: Calculate site risk index.
         $siterisk = site_risk::calculate(
             $pluginresults['totalscore'],
             $roleresults['totalrisk'],
@@ -107,10 +107,14 @@ class run_scan extends scheduled_task {
         $DB->update_record('local_mrca_scans', $scan);
 
         mtrace("MRCA: Scan completed. Site Risk Index: {$siterisk->index}/100 ({$siterisk->classification})");
-        mtrace("MRCA: Plugins scanned: {$pluginresults['scanned']}" . ($pluginresults['skipped'] > 0 ? " (core plugins skipped: {$pluginresults['skipped']})" : ""));
+        $logmsg = "MRCA: Plugins scanned: {$pluginresults['scanned']}";
+        if ($pluginresults['skipped'] > 0) {
+            $logmsg .= " (core plugins skipped: {$pluginresults['skipped']})";
+        }
+        mtrace($logmsg);
         mtrace("MRCA: Alerts generated: " . count($alerts));
 
-        // ====== LAYER 5: External integration dispatch ======
+        // Layer 5: External integration dispatch.
         $this->dispatch_report($scan, $alerts);
     }
 
@@ -145,7 +149,7 @@ class run_scan extends scheduled_task {
                     $coreskipped++;
                     continue;
                 }
-                
+
                 // Verify plugin directory exists before scanning.
                 $plugindir = \core_component::get_component_directory($component);
                 if (empty($plugindir) || !is_dir($plugindir)) {
@@ -208,9 +212,9 @@ class run_scan extends scheduled_task {
                 $pr = new plugin_risk();
                 $pr->scanid = $scan->id;
                 $pr->component = $component;
-                $pr->privacy_score = $privacyscore;
-                $pr->dependency_score = $dependencyscore;
-                $pr->capability_score = $capabilityscore;
+                $pr->privacyscore = $privacyscore;
+                $pr->dependencyscore = $dependencyscore;
+                $pr->capabilityscore = $capabilityscore;
                 $pr->save();
 
                 $allpluginrisks[$component] = [
@@ -266,8 +270,8 @@ class run_scan extends scheduled_task {
             $rr = new role_risk();
             $rr->scanid = $scan->id;
             $rr->roleid = $roleid;
-            $rr->risk_score = $roledata['risk_score'];
-            $rr->critical_cap_count = $roledata['critical_cap_count'];
+            $rr->riskscore = $roledata['risk_score'];
+            $rr->criticalcapcount = $roledata['critical_cap_count'];
             $rr->save();
 
             $totalrolerisk += $roledata['risk_score'];
@@ -319,8 +323,9 @@ class run_scan extends scheduled_task {
      * @return void
      */
     private function dispatch_to_mih(\stdClass $scan, array $alerts, string $payloadtype): void {
-        if (\core_component::get_component_directory('local_integrationhub') && class_exists('\local_integrationhub\mih')) {
-            $slug = get_config('local_mrca', 'mih_service_slug');
+        $slug = get_config('local_mrca', 'mih_service_slug');
+        $hubdir = \core_component::get_component_directory('local_integrationhub');
+        if ($hubdir && class_exists('\local_integrationhub\mih')) {
             if (!empty($slug)) {
                 mtrace("MRCA: Dispatching results to Integration Hub (Service: $slug)...");
                 try {

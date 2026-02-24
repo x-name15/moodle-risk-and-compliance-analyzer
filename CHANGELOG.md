@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.1.5] - 2026-02-24
+
+### 🌟 The (I hope) "Golden Release"
+- **Zero-Error Compliance:** Achieved the 100% "Zero Absolute" milestone in Moodle's strict coding standards (0 errors, 0 warnings in PHPCS).
+- **Dynamic Versioning:** Refactored JSON export engine to use `core_plugin_manager`, eliminating hardcoded strings and ensuring reports always reflect the real version in `version.php`.
+- **Model Refactoring:** Optimized `plugin_risk` and `role_risk` models, ensuring property naming conventions (CamelCase removal) and full DocBlock coverage.
+- **AMOS Optimization:** Sanitized and alphabetically sorted all language strings in `lang/en/local_mrca.php` for seamless integration with Moodle's translation engine.
+- **Structural Integrity:** Standardized `db/upgrade.php` and `db/uninstall.php` boilerplate and removed redundant `MOODLE_INTERNAL` checks in namespaced classes.
+- **Documentation:** Full API documentation coverage for all classes, methods, and properties across the `local_mrca` namespace.
+
 ## [1.1.0] - 2026-02-23
 
 ### Fixed

@@ -17,8 +17,6 @@
 /**
  * Privacy scanner — PII detection and Privacy API compliance.
  *
- * Merged from the original plugin_scanner and db_scanner classes.
- *
  * @package    local_mrca
  * @copyright  2026 Mr Jacket
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -26,12 +24,19 @@
 
 namespace local_mrca\scanners;
 
-defined('MOODLE_INTERNAL') || die();
-
 use core_component;
 use core_plugin_manager;
 use xmldb_file;
 
+/**
+ * Privacy scanner class.
+ *
+ * Handles PII detection in database structures and Privacy API compliance checks.
+ *
+ * @package    local_mrca
+ * @copyright  2026 Mr Jacket
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class privacy_scanner {
     /** @var array Keywords that might indicate PII. */
     private const PII_KEYWORDS = [
@@ -90,13 +95,13 @@ class privacy_scanner {
         $dir = core_component::get_component_directory($component);
         $dbfile = $dir . '/db/install.xml';
 
-        $suspicious_fields = [];
-        $whitelist_manager = new \local_mrca\manager\whitelist_manager();
+        $suspiciousfields = [];
+        $whitelistmanager = new \local_mrca\manager\whitelist_manager();
 
         if (file_exists($dbfile)) {
-            $xmldb_file = new xmldb_file($dbfile);
-            if ($xmldb_file->loadXMLStructure()) {
-                $structure = $xmldb_file->getStructure();
+            $xmldbfile = new xmldb_file($dbfile);
+            if ($xmldbfile->loadXMLStructure()) {
+                $structure = $xmldbfile->getStructure();
                 if ($structure) {
                     $tables = $structure->getTables();
                     foreach ($tables as $table) {
@@ -105,12 +110,12 @@ class privacy_scanner {
                         foreach ($fields as $field) {
                             $fieldname = $field->getName();
 
-                            if ($whitelist_manager->is_whitelisted($component, $tablename, $fieldname)) {
+                            if ($whitelistmanager->is_whitelisted($component, $tablename, $fieldname)) {
                                 continue;
                             }
 
                             if ($this->is_suspicious($fieldname)) {
-                                $suspicious_fields[] = [
+                                $suspiciousfields[] = [
                                     'table' => $tablename,
                                     'field' => $fieldname,
                                     'component' => $component,
@@ -123,7 +128,7 @@ class privacy_scanner {
             }
         }
 
-        return $suspicious_fields;
+        return $suspiciousfields;
     }
 
     /**
@@ -144,17 +149,17 @@ class privacy_scanner {
     /**
      * Checks the actual content of suspicious fields to determine if they are encrypted.
      *
-     * @param array $suspicious_fields
-     * @param \local_mrca\heuristics\crypto_analyzer $crypto_analyzer
+     * @param array $suspiciousfields
+     * @param \local_mrca\heuristics\crypto_analyzer $cryptoanalyzer
      * @return array Enriched suspicious fields with 'is_encrypted' flag.
      */
     public function check_content_analysis(
-        array $suspicious_fields,
-        \local_mrca\heuristics\crypto_analyzer $crypto_analyzer
+        array $suspiciousfields,
+        \local_mrca\heuristics\crypto_analyzer $cryptoanalyzer
     ): array {
         global $DB;
 
-        foreach ($suspicious_fields as &$finding) {
+        foreach ($suspiciousfields as &$finding) {
             $table = $finding['table'];
             $field = $finding['field'];
 
@@ -167,8 +172,8 @@ class privacy_scanner {
 
                 $records = $DB->get_records($table, null, '', $field, 0, 5);
 
-                $encrypted_count = 0;
-                $total_count = 0;
+                $encryptedcount = 0;
+                $totalcount = 0;
 
                 foreach ($records as $record) {
                     $value = $record->$field;
@@ -176,16 +181,16 @@ class privacy_scanner {
                         continue;
                     }
 
-                    $total_count++;
-                    if ($crypto_analyzer->is_encrypted($value)) {
-                        $encrypted_count++;
+                    $totalcount++;
+                    if ($cryptoanalyzer->is_encrypted($value)) {
+                        $encryptedcount++;
                     }
                 }
 
-                if ($total_count > 0 && ($encrypted_count / $total_count) > 0.6) {
+                if ($totalcount > 0 && ($encryptedcount / $totalcount) > 0.6) {
                     $finding['is_encrypted'] = true;
                     $finding['reason'] .= ' (' . get_string('verified_encrypted', 'local_mrca') . ')';
-                } else if ($total_count > 0) {
+                } else if ($totalcount > 0) {
                     $finding['reason'] .= ' (' . get_string('verified_plaintext', 'local_mrca') . ')';
                 }
             } catch (\Exception $e) {
@@ -193,6 +198,6 @@ class privacy_scanner {
             }
         }
 
-        return $suspicious_fields;
+        return $suspiciousfields;
     }
 }

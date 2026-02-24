@@ -24,30 +24,44 @@
 
 namespace local_mrca\models;
 
-defined('MOODLE_INTERNAL') || die();
-
+/**
+ * Plugin risk model class.
+ *
+ * Represents the risk scores for a specific plugin component.
+ *
+ * @package    local_mrca
+ * @copyright  2026 Mr Jacket
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class plugin_risk {
-    /** @var int */
+    /** @var int Internal ID. */
     public $id;
-    /** @var int */
+
+    /** @var int ID of the associated scan. */
     public $scanid;
-    /** @var string */
+
+    /** @var string Plugin component name. */
     public $component;
-    /** @var int */
-    public $privacy_score;
-    /** @var int */
-    public $dependency_score;
-    /** @var int */
-    public $capability_score;
-    /** @var int */
-    public $total_score;
-    /** @var int */
+
+    /** @var int Privacy risk score. */
+    public $privacyscore;
+
+    /** @var int Dependency risk score. */
+    public $dependencyscore;
+
+    /** @var int Capability risk score. */
+    public $capabilityscore;
+
+    /** @var int Total aggregated risk score. */
+    public $totalscore;
+
+    /** @var int Timestamp when record was created. */
     public $timecreated;
 
     /**
-     * Creates from DB record.
+     * Creates instance from DB record.
      *
-     * @param \stdClass $record
+     * @param \stdClass $record The database record.
      * @return self
      */
     public static function from_record(\stdClass $record): self {
@@ -55,16 +69,16 @@ class plugin_risk {
         $obj->id = $record->id ?? 0;
         $obj->scanid = $record->scanid;
         $obj->component = $record->component;
-        $obj->privacy_score = $record->privacy_score ?? 0;
-        $obj->dependency_score = $record->dependency_score ?? 0;
-        $obj->capability_score = $record->capability_score ?? 0;
-        $obj->total_score = $record->total_score ?? 0;
+        $obj->privacyscore = $record->privacy_score ?? 0;
+        $obj->dependencyscore = $record->dependency_score ?? 0;
+        $obj->capabilityscore = $record->capability_score ?? 0;
+        $obj->totalscore = $record->total_score ?? 0;
         $obj->timecreated = $record->timecreated ?? time();
         return $obj;
     }
 
     /**
-     * Converts to DB record.
+     * Converts to DB record format.
      *
      * @return \stdClass
      */
@@ -75,16 +89,16 @@ class plugin_risk {
         }
         $record->scanid = $this->scanid;
         $record->component = $this->component;
-        $record->privacy_score = $this->privacy_score;
-        $record->dependency_score = $this->dependency_score;
-        $record->capability_score = $this->capability_score;
-        $record->total_score = $this->total_score;
+        $record->privacy_score = $this->privacyscore ?? 0;
+        $record->dependency_score = $this->dependencyscore ?? 0;
+        $record->capability_score = $this->capabilityscore ?? 0;
+        $record->total_score = $this->totalscore ?? 0;
         $record->timecreated = $this->timecreated;
         return $record;
     }
 
     /**
-     * Saves to database.
+     * Saves the model to the database.
      *
      * @return int Record ID.
      */
@@ -93,7 +107,7 @@ class plugin_risk {
         if (empty($this->timecreated)) {
             $this->timecreated = time();
         }
-        $this->total_score = $this->privacy_score + $this->dependency_score + $this->capability_score;
+        $this->totalscore = $this->privacyscore + $this->dependencyscore + $this->capabilityscore;
         $this->id = $DB->insert_record('local_mrca_plugin_risks', $this->to_record());
         return $this->id;
     }

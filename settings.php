@@ -23,6 +23,7 @@
  */
 
 defined('MOODLE_INTERNAL') || die();
+
 if ($hassiteconfig) {
     // Create the category for MRCA.
     $ADMIN->add('server', new admin_category('local_mrca', get_string('pluginname', 'local_mrca')));
@@ -53,7 +54,7 @@ if ($hassiteconfig) {
         0
     ));
 
-    // --- Risk Thresholds ---
+    // Risk Thresholds.
     $settings->add(new admin_setting_heading(
         'local_mrca/risk_heading',
         get_string('risk_thresholds_heading', 'local_mrca'),
@@ -76,7 +77,7 @@ if ($hassiteconfig) {
         PARAM_INT
     ));
 
-    // --- External Integration ---
+    // External Integration.
     $settings->add(new admin_setting_heading(
         'local_mrca/integration_heading',
         get_string('integration_heading', 'local_mrca'),
@@ -84,14 +85,14 @@ if ($hassiteconfig) {
     ));
 
     // Integration Method Selector.
-    $integration_options = [
+    $integrationoptions = [
         'disabled' => get_string('integration_method_disabled', 'local_mrca'),
         'webhook' => get_string('integration_method_webhook', 'local_mrca'),
     ];
 
     // Check if MIH is installed.
     if (core_component::get_component_directory('local_integrationhub')) {
-        $integration_options['mih'] = get_string('integration_method_mih', 'local_mrca') .
+        $integrationoptions['mih'] = get_string('integration_method_mih', 'local_mrca') .
             ' (' . get_string('recommended', 'local_mrca') . ')';
     } else {
         $settings->add(new admin_setting_description(
@@ -106,7 +107,7 @@ if ($hassiteconfig) {
         get_string('integration_method', 'local_mrca'),
         get_string('integration_method_desc', 'local_mrca'),
         'disabled',
-        $integration_options
+        $integrationoptions
     ));
 
     // MIH Slug (Show if method == mih).
@@ -144,7 +145,7 @@ if ($hassiteconfig) {
     $settings->add($setting);
     $settings->hide_if('local_mrca/webhook_token', 'local_mrca/integration_method', 'neq', 'webhook');
 
-    // --- Report Dispatch Options (visible when integration is NOT disabled) ---
+    // Report Dispatch Options (visible when integration is NOT disabled).
     $settings->add(new admin_setting_heading(
         'local_mrca/report_dispatch_heading',
         get_string('report_dispatch_heading', 'local_mrca'),
@@ -158,8 +159,8 @@ if ($hassiteconfig) {
         get_string('report_trigger_desc', 'local_mrca'),
         'always',
         [
-        'always' => get_string('report_trigger_always', 'local_mrca'),
-        'critical_only' => get_string('report_trigger_critical', 'local_mrca'),
+            'always' => get_string('report_trigger_always', 'local_mrca'),
+            'critical_only' => get_string('report_trigger_critical', 'local_mrca'),
         ]
     ));
     $settings->hide_if('local_mrca/report_trigger', 'local_mrca/integration_method', 'eq', 'disabled');
@@ -171,8 +172,8 @@ if ($hassiteconfig) {
         get_string('report_payload_desc', 'local_mrca'),
         'full',
         [
-        'full' => get_string('report_payload_full', 'local_mrca'),
-        'summary' => get_string('report_payload_summary', 'local_mrca'),
+            'full' => get_string('report_payload_full', 'local_mrca'),
+            'summary' => get_string('report_payload_summary', 'local_mrca'),
         ]
     ));
     $settings->hide_if('local_mrca/report_payload', 'local_mrca/integration_method', 'eq', 'disabled');

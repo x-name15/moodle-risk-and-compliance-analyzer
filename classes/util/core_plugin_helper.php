@@ -17,9 +17,6 @@
 /**
  * Core plugin helper — detects standard Moodle plugins.
  *
- * Used to prevent false positives by distinguishing core plugins
- * (maintained by Moodle HQ) from third-party plugins.
- *
  * @package    local_mrca
  * @copyright  2026 Mr Jacket
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -27,20 +24,24 @@
 
 namespace local_mrca\util;
 
-defined('MOODLE_INTERNAL') || die();
-
 use core_plugin_manager;
 
+/**
+ * Core plugin helper class.
+ *
+ * Used to prevent false positives by distinguishing core plugins from third-party plugins.
+ *
+ * @package    local_mrca
+ * @copyright  2026 Mr Jacket
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class core_plugin_helper
 {
     /** @var array|null Cache of standard plugins list. */
-    private static $standard_plugins_cache = null;
+    private static $standardpluginscache = null;
 
     /**
      * Checks if a component is a standard (core) Moodle plugin.
-     *
-     * Uses core_plugin_manager::standard_plugins_list() to identify
-     * plugins that ship with Moodle and are maintained by Moodle HQ.
      *
      * @param string $component Component name (e.g. 'mod_forum', 'block_html').
      * @return bool True if the plugin is a standard Moodle plugin.
@@ -73,22 +74,24 @@ class core_plugin_helper
      * @return array List of standard plugin names for this type.
      */
     private static function get_standard_plugins(string $type): array {
-        if (self::$standard_plugins_cache === null) {
-            self::$standard_plugins_cache = [];
+        if (self::$standardpluginscache === null) {
+            self::$standardpluginscache = [];
         }
 
-        if (!isset(self::$standard_plugins_cache[$type])) {
+        if (!isset(self::$standardpluginscache[$type])) {
             $list = core_plugin_manager::standard_plugins_list($type);
-            self::$standard_plugins_cache[$type] = is_array($list) ? $list : [];
+            self::$standardpluginscache[$type] = is_array($list) ? $list : [];
         }
 
-        return self::$standard_plugins_cache[$type];
+        return self::$standardpluginscache[$type];
     }
 
     /**
      * Resets the internal cache. Useful for testing.
+     *
+     * @return void
      */
     public static function reset_cache(): void {
-        self::$standard_plugins_cache = null;
+        self::$standardpluginscache = null;
     }
 }

@@ -24,14 +24,22 @@
 
 namespace local_mrca\heuristics;
 
-defined('MOODLE_INTERNAL') || die();
-
+/**
+ * Crypto analyzer class.
+ *
+ * Provides heuristics and entropy calculations to identify potentially sensitive
+ * data that has been hashed or encrypted.
+ *
+ * @package    local_mrca
+ * @copyright  2026 Mr Jacket
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class crypto_analyzer {
     /**
      * Estimates if a string is likely encrypted or hashed.
      *
-     * @param string $data
-     * @return bool
+     * @param string $data The string to analyze.
+     * @return bool True if the data appears to be encrypted or hashed.
      */
     public function is_encrypted(string $data): bool {
         if (empty($data)) {
@@ -82,8 +90,8 @@ class crypto_analyzer {
     /**
      * Calculates Shannon entropy of a string.
      *
-     * @param string $string
-     * @return float
+     * @param string $string The input string.
+     * @return float The calculated entropy value.
      */
     private function calculate_entropy(string $string): float {
         $h = 0;

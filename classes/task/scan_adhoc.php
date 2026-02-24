@@ -24,15 +24,25 @@
 
 namespace local_mrca\task;
 
-defined('MOODLE_INTERNAL') || die();
-
 use core\task\adhoc_task;
 
+/**
+ * Ad-hoc scan task class.
+ *
+ * This task is queued for immediate execution, typically triggered by an observer
+ * when a new plugin is enabled or by a manual request from the dashboard.
+ *
+ * @package    local_mrca
+ * @copyright  2026 Mr Jacket
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class scan_adhoc extends adhoc_task {
     /**
-     * Execute the task.
+     * Execute the ad-hoc scan task.
+     *
+     * @return void
      */
-    public function execute() {
+    public function execute(): void {
         mtrace("MRCA: Starting Ad-hoc Risk Scan...");
         $task = new \local_mrca\task\run_scan();
         $task->execute();

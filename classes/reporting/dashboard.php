@@ -17,10 +17,6 @@
 /**
  * Dashboard data preparation class.
  *
- * Serves all data for the MRCA dashboard: site risk index, risk trend,
- * top-5 risky plugins/roles, dependency audit, permission heatmap,
- * correlation alerts, and multi-score plugin breakdown.
- *
  * @package    local_mrca
  * @copyright  2026 Mr Jacket
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -28,12 +24,20 @@
 
 namespace local_mrca\reporting;
 
-defined('MOODLE_INTERNAL') || die();
-
 use renderable;
 use templatable;
 use renderer_base;
 
+/**
+ * Dashboard class.
+ *
+ * Serves all data for the MRCA dashboard: site risk index, risk trend,
+ * top-5 risky plugins/roles, dependency audit, and more.
+ *
+ * @package    local_mrca
+ * @copyright  2026 Mr Jacket
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class dashboard implements renderable, templatable {
     /**
      * Exports data for the Mustache template.
@@ -74,12 +78,12 @@ class dashboard implements renderable, templatable {
         ];
 
         // Get the latest scan.
-        $latest_scan = $DB->get_records('local_mrca_scans', ['status' => 1], 'timecreated DESC', '*', 0, 1);
-        if (empty($latest_scan)) {
+        $latestscan = $DB->get_records('local_mrca_scans', ['status' => 1], 'timecreated DESC', '*', 0, 1);
+        if (empty($latestscan)) {
             return $data;
         }
 
-        $scan = reset($latest_scan);
+        $scan = reset($latestscan);
         $data['has_scans'] = true;
         $data['scanid'] = $scan->id;
         $data['total_score'] = $scan->total_score;
@@ -94,38 +98,38 @@ class dashboard implements renderable, templatable {
         $data['site_risk_class'] = $classification;
         $data['site_risk_label'] = get_string('risk_' . $classification, 'local_mrca');
 
-        // Badge color.
-        $class_map = [
+        // Badge color mapping.
+        $classmap = [
             'healthy' => 'success',
             'low' => 'info',
             'moderate' => 'warning',
             'high' => 'danger',
             'critical' => 'danger',
         ];
-        $data['site_risk_badge'] = $class_map[$classification] ?? 'secondary';
+        $data['site_risk_badge'] = $classmap[$classification] ?? 'secondary';
 
-        // ===== RISK TREND (historical) =====
+        // Add risk trend (historical).
         $data = $this->add_risk_trend($data, $DB);
 
-        // ===== PLUGIN RISKS with multi-score =====
+        // Add plugin risks with multi-score.
         $data = $this->add_plugin_risks($data, $DB, $scan);
 
-        // ===== TOP 5 RISKY PLUGINS =====
+        // Add top 5 risky plugins.
         $data = $this->add_top_plugins($data, $DB, $scan);
 
-        // ===== TOP 5 RISKY ROLES =====
+        // Add top 5 risky roles.
         $data = $this->add_top_roles($data, $DB, $scan);
 
-        // ===== DEPENDENCY AUDIT =====
+        // Add dependency audit data.
         $data = $this->add_dependency_audit($data, $DB, $scan);
 
-        // ===== ROLE HEATMAP =====
+        // Add role heatmap data.
         $data = $this->add_role_heatmap($data, $DB, $scan);
 
-        // ===== CORRELATION ALERTS =====
+        // Add correlation alerts.
         $data = $this->add_alerts($data, $DB, $scan);
 
-        // ===== WHITELIST =====
+        // Add whitelist items.
         $data = $this->add_whitelist($data);
 
         // Integration check.
@@ -139,11 +143,11 @@ class dashboard implements renderable, templatable {
      * Adds risk trend data from last 10 scans.
      *
      * @param array $data Template data.
-     * @param \moodle_database $DB Database object.
+     * @param \moodle_database $db Database object.
      * @return array Updated data.
      */
-    private function add_risk_trend(array $data, $DB): array {
-        $scans = $DB->get_records('local_mrca_scans', ['status' => 1], 'timecreated ASC', '*', 0, 10);
+    private function add_risk_trend(array $data, $db): array {
+        $scans = $db->get_records('local_mrca_scans', ['status' => 1], 'timecreated ASC', '*', 0, 10);
 
         if (count($scans) >= 2) {
             $labels = [];
@@ -168,41 +172,36 @@ class dashboard implements renderable, templatable {
      * Adds plugin risks with multi-score breakdown.
      *
      * @param array $data Template data.
-     * @param \moodle_database $DB Database object.
-     * @param \stdClass $scan Current scan.
+     * @param \moodle_database $db Database object.
+     * @param \stdClass $scan Current scan record.
      * @return array Updated data.
      */
-    private function add_plugin_risks(array $data, $DB, \stdClass $scan): array {
-        // Use multi-score table for richer data.
-        $multi_risks = $DB->get_records('local_mrca_plugin_risks', ['scanid' => $scan->id], 'total_score DESC');
-        $results = $DB->get_records('local_mrca_scan_results', ['scanid' => $scan->id], 'risk_score DESC');
+    private function add_plugin_risks(array $data, $db, \stdClass $scan): array {
+        $multirisks = $db->get_records('local_mrca_plugin_risks', ['scanid' => $scan->id], 'total_score DESC');
+        $results = $db->get_records('local_mrca_scan_results', ['scanid' => $scan->id], 'risk_score DESC');
 
         $engine = new \local_mrca\engine\risk_engine();
-        $risk_levels = ['low' => 0, 'medium' => 0, 'high' => 0, 'critical' => 0];
+        $risklevels = ['low' => 0, 'medium' => 0, 'high' => 0, 'critical' => 0];
 
-        // Index multi-score by component.
-        $multi_index = [];
-        foreach ($multi_risks as $mr) {
-            $multi_index[$mr->component] = $mr;
+        $multiindex = [];
+        foreach ($multirisks as $mr) {
+            $multiindex[$mr->component] = $mr;
         }
 
         foreach ($results as $result) {
             $level = $engine->get_risk_level($result->risk_score);
-            $risk_levels[$level]++;
+            $risklevels[$level]++;
 
-            $badge_class = 'success';
-            if ($level === 'critical') {
-                $badge_class = 'danger';
-            } else if ($level === 'high') {
-                $badge_class = 'danger';
+            $badgeclass = 'success';
+            if ($level === 'critical' || $level === 'high') {
+                $badgeclass = 'danger';
             } else if ($level === 'medium') {
-                $badge_class = 'warning';
+                $badgeclass = 'warning';
             }
 
-            $mr = $multi_index[$result->plugin] ?? null;
+            $mr = $multiindex[$result->plugin] ?? null;
 
-            // Extract PII fields from scan details for whitelist UX.
-            $pii_fields = [];
+            $piifields = [];
             $details = json_decode($result->details, true);
             $wm = new \local_mrca\manager\whitelist_manager();
             if (!empty($details['db_findings'])) {
@@ -210,7 +209,7 @@ class dashboard implements renderable, templatable {
                     $tbl = $finding['table'] ?? '';
                     $fld = $finding['field'] ?? '';
                     if (!empty($tbl) && !empty($fld) && !$wm->is_whitelisted($result->plugin, $tbl, $fld)) {
-                        $pii_fields[] = [
+                        $piifields[] = [
                             'table' => $tbl,
                             'field' => $fld,
                             'component' => $result->plugin,
@@ -224,17 +223,16 @@ class dashboard implements renderable, templatable {
                 'plugin' => $result->plugin,
                 'risk_score' => $result->risk_score,
                 'risk_level' => get_string('risk_' . $level, 'local_mrca'),
-                'badge_class' => $badge_class,
+                'badge_class' => $badgeclass,
                 'has_privacy_provider' => $result->has_privacy_provider,
                 'privacy_score' => $mr->privacy_score ?? 0,
                 'dependency_score' => $mr->dependency_score ?? 0,
                 'capability_score' => $mr->capability_score ?? 0,
-                'pii_fields' => $pii_fields,
-                'has_pii_fields' => !empty($pii_fields),
+                'pii_fields' => $piifields,
+                'has_pii_fields' => !empty($piifields),
             ];
         }
 
-        // Chart data: risk distribution.
         $data['chart_data'] = json_encode([
             'labels' => [
                 get_string('risk_low', 'local_mrca'),
@@ -243,10 +241,10 @@ class dashboard implements renderable, templatable {
                 get_string('risk_critical', 'local_mrca'),
             ],
             'values' => [
-                $risk_levels['low'],
-                $risk_levels['medium'],
-                $risk_levels['high'],
-                $risk_levels['critical'],
+                $risklevels['low'],
+                $risklevels['medium'],
+                $risklevels['high'],
+                $risklevels['critical'],
             ],
             'colors' => ['#28a745', '#ffc107', '#fd7e14', '#dc3545'],
         ]);
@@ -258,12 +256,12 @@ class dashboard implements renderable, templatable {
      * Adds top 5 risky plugins.
      *
      * @param array $data Template data.
-     * @param \moodle_database $DB Database object.
-     * @param \stdClass $scan Current scan.
+     * @param \moodle_database $db Database object.
+     * @param \stdClass $scan Current scan record.
      * @return array Updated data.
      */
-    private function add_top_plugins(array $data, $DB, \stdClass $scan): array {
-        $top = $DB->get_records(
+    private function add_top_plugins(array $data, $db, \stdClass $scan): array {
+        $top = $db->get_records(
             'local_mrca_plugin_risks',
             ['scanid' => $scan->id],
             'total_score DESC',
@@ -301,12 +299,12 @@ class dashboard implements renderable, templatable {
      * Adds top 5 risky roles.
      *
      * @param array $data Template data.
-     * @param \moodle_database $DB Database object.
-     * @param \stdClass $scan Current scan.
+     * @param \moodle_database $db Database object.
+     * @param \stdClass $scan Current scan record.
      * @return array Updated data.
      */
-    private function add_top_roles(array $data, $DB, \stdClass $scan): array {
-        $top = $DB->get_records(
+    private function add_top_roles(array $data, $db, \stdClass $scan): array {
+        $top = $db->get_records(
             'local_mrca_role_risks',
             ['scanid' => $scan->id],
             'risk_score DESC',
@@ -319,7 +317,7 @@ class dashboard implements renderable, templatable {
             if ($rr->risk_score <= 0) {
                 continue;
             }
-            $role = $DB->get_record('role', ['id' => $rr->roleid]);
+            $role = $db->get_record('role', ['id' => $rr->roleid]);
             if (!$role) {
                 continue;
             }
@@ -349,12 +347,12 @@ class dashboard implements renderable, templatable {
      * Adds dependency audit panel data.
      *
      * @param array $data Template data.
-     * @param \moodle_database $DB Database object.
-     * @param \stdClass $scan Current scan.
+     * @param \moodle_database $db Database object.
+     * @param \stdClass $scan Current scan record.
      * @return array Updated data.
      */
-    private function add_dependency_audit(array $data, $DB, \stdClass $scan): array {
-        $results = $DB->get_records('local_mrca_scan_results', ['scanid' => $scan->id]);
+    private function add_dependency_audit(array $data, $db, \stdClass $scan): array {
+        $results = $db->get_records('local_mrca_scan_results', ['scanid' => $scan->id]);
 
         foreach ($results as $result) {
             $details = json_decode($result->details, true);
@@ -416,29 +414,29 @@ class dashboard implements renderable, templatable {
      * Adds role heatmap data.
      *
      * @param array $data Template data.
-     * @param \moodle_database $DB Database object.
-     * @param \stdClass $scan Current scan.
+     * @param \moodle_database $db Database object.
+     * @param \stdClass $scan Current scan record.
      * @return array Updated data.
      */
-    private function add_role_heatmap(array $data, $DB, \stdClass $scan): array {
-        $role_risks = $DB->get_records('local_mrca_role_risks', ['scanid' => $scan->id], 'risk_score DESC');
+    private function add_role_heatmap(array $data, $db, \stdClass $scan): array {
+        $rolerisks = $db->get_records('local_mrca_role_risks', ['scanid' => $scan->id], 'risk_score DESC');
 
-        foreach ($role_risks as $rr) {
-            $role = $DB->get_record('role', ['id' => $rr->roleid]);
+        foreach ($rolerisks as $rr) {
+            $role = $db->get_record('role', ['id' => $rr->roleid]);
             if (!$role) {
                 continue;
             }
 
-            $heatmap_class = 'success';
+            $heatmapclass = 'success';
             $emoji = '🟢';
             if ($rr->critical_cap_count >= 8) {
-                $heatmap_class = 'danger';
+                $heatmapclass = 'danger';
                 $emoji = '🔴';
             } else if ($rr->critical_cap_count >= 3) {
-                $heatmap_class = 'warning';
+                $heatmapclass = 'warning';
                 $emoji = '🟠';
             } else if ($rr->critical_cap_count >= 1) {
-                $heatmap_class = 'info';
+                $heatmapclass = 'info';
                 $emoji = '🟡';
             }
 
@@ -446,7 +444,7 @@ class dashboard implements renderable, templatable {
                 'role_shortname' => $role->shortname,
                 'critical_cap_count' => $rr->critical_cap_count,
                 'risk_score' => $rr->risk_score,
-                'heatmap_class' => $heatmap_class,
+                'heatmap_class' => $heatmapclass,
                 'emoji' => $emoji,
             ];
         }
@@ -459,25 +457,25 @@ class dashboard implements renderable, templatable {
      * Adds correlation alerts.
      *
      * @param array $data Template data.
-     * @param \moodle_database $DB Database object.
-     * @param \stdClass $scan Current scan.
+     * @param \moodle_database $db Database object.
+     * @param \stdClass $scan Current scan record.
      * @return array Updated data.
      */
-    private function add_alerts(array $data, $DB, \stdClass $scan): array {
-        $alerts = $DB->get_records('local_mrca_alerts', ['scanid' => $scan->id], 'severity DESC', '*', 0, 20);
+    private function add_alerts(array $data, $db, \stdClass $scan): array {
+        $alerts = $db->get_records('local_mrca_alerts', ['scanid' => $scan->id], 'severity DESC', '*', 0, 20);
 
         foreach ($alerts as $alert) {
-            $alert_badge = 'info';
+            $alertbadge = 'info';
             if ($alert->severity === 'critical') {
-                $alert_badge = 'danger';
+                $alertbadge = 'danger';
             } else if ($alert->severity === 'high') {
-                $alert_badge = 'warning';
+                $alertbadge = 'warning';
             }
 
             $data['alerts'][] = [
                 'type' => $alert->type,
                 'severity' => $alert->severity,
-                'severity_badge' => $alert_badge,
+                'severity_badge' => $alertbadge,
                 'component' => $alert->component,
                 'description' => $alert->description,
             ];

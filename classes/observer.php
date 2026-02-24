@@ -24,16 +24,25 @@
 
 namespace local_mrca;
 
-defined('MOODLE_INTERNAL') || die();
-
+/**
+ * Event observer class.
+ *
+ * Listens for core events like plugin installation to trigger automated tasks.
+ *
+ * @package    local_mrca
+ * @copyright  2026 Mr Jacket
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class observer {
     /**
      * Observer for \core\event\plugin_enabled.
+     *
      * Triggers a scan if the setting is enabled.
      *
-     * @param \core\event\plugin_enabled $event
+     * @param \core\event\plugin_enabled $event The event object.
+     * @return void
      */
-    public static function plugin_enabled(\core\event\plugin_enabled $event) {
+    public static function plugin_enabled(\core\event\plugin_enabled $event): void {
         if (get_config('local_mrca', 'autoscan_new_plugins')) {
             $task = new \local_mrca\task\scan_adhoc();
             \core\task\manager::queue_adhoc_task($task);

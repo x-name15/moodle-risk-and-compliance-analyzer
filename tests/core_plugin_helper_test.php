@@ -24,60 +24,97 @@
 
 namespace local_mrca;
 
-defined('MOODLE_INTERNAL') || die();
-
 use local_mrca\util\core_plugin_helper;
 
 /**
  * Tests for core_plugin_helper detection.
  *
- * @covers \local_mrca\util\core_plugin_helper
+ * @package    local_mrca
+ * @copyright  2026 Mr Jacket
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     \local_mrca\util\core_plugin_helper
  */
-class core_plugin_helper_test extends \advanced_testcase
+final class core_plugin_helper_test extends \advanced_testcase
 {
+    /**
+     * Set up the test environment.
+     *
+     * @return void
+     */
     protected function setUp(): void {
         parent::setUp();
         core_plugin_helper::reset_cache();
     }
 
+    /**
+     * Test core module detection.
+     *
+     * @return void
+     */
     public function test_core_module_detected(): void {
         $this->assertTrue(core_plugin_helper::is_core_plugin('mod_forum'));
         $this->assertTrue(core_plugin_helper::is_core_plugin('mod_assign'));
         $this->assertTrue(core_plugin_helper::is_core_plugin('mod_quiz'));
     }
 
+    /**
+     * Test core block detection.
+     *
+     * @return void
+     */
     public function test_core_block_detected(): void {
         $this->assertTrue(core_plugin_helper::is_core_plugin('block_html'));
         $this->assertTrue(core_plugin_helper::is_core_plugin('block_navigation'));
     }
 
+    /**
+     * Test core auth detection.
+     *
+     * @return void
+     */
     public function test_core_auth_detected(): void {
         $this->assertTrue(core_plugin_helper::is_core_plugin('auth_manual'));
         $this->assertTrue(core_plugin_helper::is_core_plugin('auth_email'));
     }
 
+    /**
+     * Test core subsystem detection.
+     *
+     * @return void
+     */
     public function test_core_subsystem_detected(): void {
         $this->assertTrue(core_plugin_helper::is_core_plugin('core'));
         $this->assertTrue(core_plugin_helper::is_core_plugin('core_course'));
     }
 
+    /**
+     * Test that third-party plugins are correctly identified as non-core.
+     *
+     * @return void
+     */
     public function test_third_party_plugin_not_detected(): void {
-        // A plugin that doesn't ship with Moodle.
         $this->assertFalse(core_plugin_helper::is_core_plugin('mod_nonexistent_xyzzy'));
         $this->assertFalse(core_plugin_helper::is_core_plugin('local_mrca'));
     }
 
+    /**
+     * Test invalid component formats.
+     *
+     * @return void
+     */
     public function test_invalid_component_format(): void {
         $this->assertFalse(core_plugin_helper::is_core_plugin(''));
         $this->assertFalse(core_plugin_helper::is_core_plugin('nounderscore'));
     }
 
+    /**
+     * Test cache reset functionality.
+     *
+     * @return void
+     */
     public function test_cache_reset(): void {
-        // First call populates cache.
         core_plugin_helper::is_core_plugin('mod_forum');
-        // Reset should clear it.
         core_plugin_helper::reset_cache();
-        // Should still work after reset.
         $this->assertTrue(core_plugin_helper::is_core_plugin('mod_forum'));
     }
 }

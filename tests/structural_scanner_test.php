@@ -24,75 +24,126 @@
 
 namespace local_mrca;
 
-defined('MOODLE_INTERNAL') || die();
-
 use local_mrca\scanners\structural_scanner;
 
 /**
  * Tests for structural_scanner function detection logic.
  *
- * @covers \local_mrca\scanners\structural_scanner
+ * @package    local_mrca
+ * @copyright  2026 Mr Jacket
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     \local_mrca\scanners\structural_scanner
  */
-class structural_scanner_test extends \advanced_testcase
+final class structural_scanner_test extends \advanced_testcase
 {
-    /** @var structural_scanner */
+    /** @var structural_scanner The scanner instance being tested. */
     private $scanner;
 
+    /**
+     * Set up the test environment.
+     *
+     * @return void
+     */
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest();
         $this->scanner = new structural_scanner();
     }
 
+    /**
+     * Test that scanning a core module returns expected findings.
+     *
+     * @return void
+     */
     public function test_scan_core_module_returns_findings(): void {
-        // mod_forum is a core module with version.php and lang.
+        // Mod_forum is a core module with version.php and lang.
         $findings = $this->scanner->scan('mod_forum');
         $this->assertArrayHasKey('has_version_file', $findings);
         $this->assertTrue($findings['has_version_file']);
         $this->assertArrayHasKey('structural_score', $findings);
     }
 
+    /**
+     * Test scanning a nonexistent plugin.
+     *
+     * @return void
+     */
     public function test_scan_nonexistent_plugin(): void {
         $findings = $this->scanner->scan('mod_nonexistent_xyzzy_fake');
         $this->assertEquals(structural_scanner::SCORE_NO_VERSION_FILE, $findings['structural_score']);
     }
 
+    /**
+     * Test that file_get_contents is not flagged as unsafe.
+     *
+     * @return void
+     */
     public function test_file_get_contents_not_flagged(): void {
-        // file_get_contents should NOT be in the unsafe functions list.
+        // The file_get_contents function should NOT be in the unsafe functions list.
         $findings = $this->scanner->scan('mod_forum');
-        $unsafe_funcs = array_column($findings['unsafe_calls'], 'function');
-        $this->assertNotContains('file_get_contents', $unsafe_funcs);
+        $unsafefuncs = array_column($findings['unsafe_calls'], 'function');
+        $this->assertNotContains('file_get_contents', $unsafefuncs);
     }
 
+    /**
+     * Test that 'error' is not flagged as deprecated.
+     *
+     * @return void
+     */
     public function test_error_not_flagged_as_deprecated(): void {
-        // 'error' should NOT be in the deprecated functions list.
+        // The 'error' string should NOT be in the deprecated functions list.
         $findings = $this->scanner->scan('mod_forum');
-        $deprecated_funcs = array_column($findings['deprecated_calls'], 'function');
-        $this->assertNotContains('error', $deprecated_funcs);
+        $deprecatedfuncs = array_column($findings['deprecated_calls'], 'function');
+        $this->assertNotContains('error', $deprecatedfuncs);
     }
 
+    /**
+     * Test that the structural score is capped at 65.
+     *
+     * @return void
+     */
     public function test_structural_score_capped_at_65(): void {
         $findings = $this->scanner->scan('mod_forum');
         $this->assertLessThanOrEqual(65, $findings['structural_score']);
     }
 
+    /**
+     * Test that scanning itself finds the version file.
+     *
+     * @return void
+     */
     public function test_self_scan_has_version_file(): void {
         // MRCA scanning itself should find version.php.
         $findings = $this->scanner->scan('local_mrca');
         $this->assertTrue($findings['has_version_file']);
     }
 
+    /**
+     * Test that scanning itself finds the lang folder.
+     *
+     * @return void
+     */
     public function test_self_scan_has_lang(): void {
         $findings = $this->scanner->scan('local_mrca');
         $this->assertTrue($findings['has_lang_file']);
     }
 
+    /**
+     * Test that scanning itself finds its own tests.
+     *
+     * @return void
+     */
     public function test_self_scan_has_tests(): void {
         // Now that we have tests, this should be true.
         $findings = $this->scanner->scan('local_mrca');
         $this->assertTrue($findings['has_tests']);
     }
 
+    /**
+     * Test that scanning itself finds the README.
+     *
+     * @return void
+     */
     public function test_self_scan_has_readme(): void {
         $findings = $this->scanner->scan('local_mrca');
         $this->assertTrue($findings['has_readme']);

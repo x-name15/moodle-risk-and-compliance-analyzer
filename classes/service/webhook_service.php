@@ -24,8 +24,15 @@
 
 namespace local_mrca\service;
 
-defined('MOODLE_INTERNAL') || die();
-
+/**
+ * Webhook service class.
+ *
+ * Handles outgoing HTTP POST requests to send JSON reports to external SIEM/SOC integrations.
+ *
+ * @package    local_mrca
+ * @copyright  2026 Mr Jacket
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class webhook_service {
     /**
      * Sends the scan report to a generic webhook.
@@ -36,7 +43,7 @@ class webhook_service {
      * @return bool True on success, false on failure.
      */
     public function send_report(array $payload, string $url, string $token = ''): bool {
-        $json_payload = json_encode($payload);
+        $jsonpayload = json_encode($payload);
 
         $curl = new \curl();
         $options = [
@@ -56,7 +63,7 @@ class webhook_service {
             $curl->setHeader($header);
         }
 
-        $response = $curl->post($url, $json_payload);
+        $response = $curl->post($url, $jsonpayload);
         $info = $curl->get_info();
 
         if ($info['http_code'] >= 200 && $info['http_code'] < 300) {

@@ -17,17 +17,12 @@
 /**
  * Privacy API provider for MRCA.
  *
- * Declares what user data MRCA stores and provides export/delete
- * functionality for GDPR compliance.
- *
  * @package    local_mrca
  * @copyright  2026 Mr Jacket
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace local_mrca\privacy;
-
-defined('MOODLE_INTERNAL') || die();
 
 use core_privacy\local\metadata\collection;
 use core_privacy\local\request\approved_contextlist;
@@ -39,11 +34,14 @@ use core_privacy\local\request\writer;
 /**
  * Privacy provider implementation for local_mrca.
  *
- * MRCA stores minimal user data: only the userid of administrators
- * who whitelist fields during scans. Scan results, risk scores,
- * and alerts are systemic data not tied to individual users.
+ * @package    local_mrca
+ * @copyright  2026 Mr Jacket
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class provider implements \core_privacy\local\metadata\provider, \core_privacy\local\request\core_userlist_provider, \core_privacy\local\request\plugin\provider {
+class provider implements
+    \core_privacy\local\metadata\provider,
+    \core_privacy\local\request\core_userlist_provider,
+    \core_privacy\local\request\plugin\provider {
     /**
      * Describes the user data stored by MRCA.
      *

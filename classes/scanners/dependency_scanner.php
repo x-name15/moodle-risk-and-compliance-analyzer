@@ -17,9 +17,6 @@
 /**
  * Dependency scanner — plugin compatibility and dependency analysis.
  *
- * Per REBRAND.MD §4.2: Analyzes $plugin->requires, validates dependencies,
- * compares core version, detects outdated/deprecated plugins.
- *
  * @package    local_mrca
  * @copyright  2026 Mr Jacket
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -27,10 +24,17 @@
 
 namespace local_mrca\scanners;
 
-defined('MOODLE_INTERNAL') || die();
-
 use core_plugin_manager;
 
+/**
+ * Dependency scanner class.
+ *
+ * Analyzes plugin requirements, validates dependencies, and detects deprecated APIs.
+ *
+ * @package    local_mrca
+ * @copyright  2026 Mr Jacket
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class dependency_scanner
 {
     /** @var int Plugins not updated in this many years are flagged. */
@@ -51,7 +55,7 @@ class dependency_scanner
      *
      * @param string $component Component name (e.g. 'mod_forum').
      * @return array Findings with keys: core_mismatch, missing_dependencies, outdated,
-     *               deprecated_apis, no_recent_update, dependency_count, score_details.
+     * deprecated_apis, no_recent_update, dependency_count, score_details.
      */
     public function scan(string $component): array {
         $findings = [
@@ -65,12 +69,12 @@ class dependency_scanner
         ];
 
         $pluginman = core_plugin_manager::instance();
-        $all_plugins = $pluginman->get_plugins();
+        $allplugins = $pluginman->get_plugins();
 
         // Find the plugin info object.
         $plugininfo = null;
-        foreach ($all_plugins as $type => $plugins_by_type) {
-            foreach ($plugins_by_type as $name => $info) {
+        foreach ($allplugins as $type => $pluginsbytype) {
+            foreach ($pluginsbytype as $name => $info) {
                 if ($info->component === $component) {
                     $plugininfo = $info;
                     break 2;
@@ -84,8 +88,8 @@ class dependency_scanner
 
         // 1. Core version compatibility check.
         if (!empty($plugininfo->versionrequires)) {
-            $core_version = get_config('', 'version');
-            if ($core_version < $plugininfo->versionrequires) {
+            $coreversion = get_config('', 'version');
+            if ($coreversion < $plugininfo->versionrequires) {
                 $findings['core_mismatch'] = true;
             }
         }
@@ -93,10 +97,10 @@ class dependency_scanner
         // 2. Check declared dependencies.
         if (!empty($plugininfo->dependencies)) {
             $findings['dependency_count'] = count($plugininfo->dependencies);
-            foreach ($plugininfo->dependencies as $dep_component => $dep_version) {
-                $dep_dir = \core_component::get_component_directory($dep_component);
-                if (empty($dep_dir) || !is_dir($dep_dir)) {
-                    $findings['missing_dependencies'][] = $dep_component;
+            foreach ($plugininfo->dependencies as $depcomponent => $depversion) {
+                $depdir = \core_component::get_component_directory($depcomponent);
+                if (empty($depdir) || !is_dir($depdir)) {
+                    $findings['missing_dependencies'][] = $depcomponent;
                 }
             }
         }
@@ -104,9 +108,9 @@ class dependency_scanner
         // 3. Check if plugin version is very old.
         if (!empty($plugininfo->versiondb)) {
             // Moodle version timestamps follow YYYYMMDDXX format.
-            $version_year = (int)substr((string)$plugininfo->versiondb, 0, 4);
-            $current_year = (int)date('Y');
-            $findings['version_gap'] = $current_year - $version_year;
+            $versionyear = (int)substr((string)$plugininfo->versiondb, 0, 4);
+            $currentyear = (int)date('Y');
+            $findings['version_gap'] = $currentyear - $versionyear;
             if ($findings['version_gap'] >= self::OUTDATED_THRESHOLD_YEARS) {
                 $findings['outdated'] = true;
                 $findings['no_recent_update'] = true;
@@ -129,7 +133,7 @@ class dependency_scanner
      * @return array List of deprecated API usages found.
      */
     private function detect_deprecated_apis(string $dir): array {
-        $deprecated_found = [];
+        $deprecatedfound = [];
         $files = $this->get_php_files($dir);
 
         foreach ($files as $file) {
@@ -153,7 +157,7 @@ class dependency_scanner
                             continue;
                         }
                         if (strpos($line, $pattern) !== false) {
-                            $deprecated_found[] = [
+                            $deprecatedfound[] = [
                                 'file' => $relative,
                                 'line' => $linenum + 1,
                                 'deprecated' => $pattern,
@@ -166,7 +170,7 @@ class dependency_scanner
             }
         }
 
-        return $deprecated_found;
+        return $deprecatedfound;
     }
 
     /**

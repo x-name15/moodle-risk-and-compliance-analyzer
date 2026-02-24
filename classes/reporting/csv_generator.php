@@ -24,15 +24,23 @@
 
 namespace local_mrca\reporting;
 
-defined('MOODLE_INTERNAL') || die();
-
+/**
+ * CSV generator class.
+ *
+ * Processes scan data and streams it as a CSV file for download.
+ *
+ * @package    local_mrca
+ * @copyright  2026 Mr Jacket
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class csv_generator {
     /**
-     * Generates a CSV report for a scan.
+     * Generates a CSV report for a scan and sends it to output.
      *
-     * @param int $scanid
+     * @param int $scanid The ID of the scan to export.
+     * @return void
      */
-    public function generate_report(int $scanid) {
+    public function generate_report(int $scanid): void {
         global $DB;
 
         $scan = $DB->get_record('local_mrca_scans', ['id' => $scanid], '*', MUST_EXIST);

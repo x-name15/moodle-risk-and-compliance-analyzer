@@ -24,19 +24,41 @@
 
 namespace local_mrca\event;
 
-defined('MOODLE_INTERNAL') || die();
-
+/**
+ * High risk detected event class.
+ *
+ * Triggered when a scan detects a plugin with a risk score above the high threshold.
+ *
+ * @package    local_mrca
+ * @copyright  2026 Mr Jacket
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class high_risk_detected extends \core\event\base {
+    /**
+     * Init method.
+     *
+     * @return void
+     */
     protected function init() {
         $this->data['crud'] = 'c';
         $this->data['edulevel'] = self::LEVEL_OTHER;
         $this->data['objecttable'] = 'local_mrca_scans';
     }
 
+    /**
+     * Return localised event name.
+     *
+     * @return string
+     */
     public static function get_name() {
         return get_string('event_high_risk_detected', 'local_mrca');
     }
 
+    /**
+     * Returns description of what happened.
+     *
+     * @return string
+     */
     public function get_description() {
         return get_string('event_high_risk_detected_desc', 'local_mrca', [
             'userid' => $this->userid,
@@ -45,6 +67,11 @@ class high_risk_detected extends \core\event\base {
         ]);
     }
 
+    /**
+     * Return the event URL.
+     *
+     * @return \moodle_url
+     */
     public function get_url() {
         return new \moodle_url('/local/mrca/index.php');
     }

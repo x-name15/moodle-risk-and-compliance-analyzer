@@ -15,25 +15,20 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Plugin uninstall — cleans up plugin settings on removal.
+ * Plugin uninstall file.
  *
  * @package    local_mrca
  * @copyright  2026 Mr Jacket
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Custom uninstall procedure.
  *
- * Removes plugin configuration settings that are not automatically
- * cleaned up by Moodle's standard uninstall process.
- *
- * @return bool
+ * @return bool True on success.
  */
 function xmldb_local_mrca_uninstall() {
-    // Remove all plugin settings.
+    // List of settings to be removed.
     $settings = [
         'autoscan_new_plugins',
         'scan_core_plugins',

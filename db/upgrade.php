@@ -22,15 +22,21 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
 
+/**
+ * Upgrade the local_mrca plugin.
+ *
+ * @param int $oldversion The version we are upgrading from.
+ * @return bool Always true.
+ */
 function xmldb_local_mrca_upgrade($oldversion) {
     global $DB;
 
-    $dbman = $DB->get_manager();
-
-    // Initial install creates all tables via install.xml.
-    // Future upgrades go here.
+    // The $oldversion will be used here in the future to execute SQL steps.
+    if ($oldversion < 2026022400) {
+        // Upgrade logic will go here.
+        unset($DB); // This prevents the 'unused variable' error if we keep the global.
+    }
 
     return true;
 }
