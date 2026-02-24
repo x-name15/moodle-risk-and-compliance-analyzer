@@ -24,7 +24,6 @@
 
 namespace local_mrca\scanners;
 
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Analyzes plugin file organization and quality.
