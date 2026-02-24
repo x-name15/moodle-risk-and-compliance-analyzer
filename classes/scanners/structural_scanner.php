@@ -24,13 +24,16 @@
 
 namespace local_mrca\scanners;
 
+defined('MOODLE_INTERNAL') || die();
+
 /**
- * Analyzes plugin file organization, detects deprecated function usage,
- * validates version metadata, and checks coding standards compliance.
+ * Analyzes plugin file organization and quality.
  *
  * @package    local_mrca
  * @copyright  2026 Mr Jacket
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @SuppressWarnings(PHPMD.CamelCaseClassName)
+ * @SuppressWarnings(PHPMD.CamelCaseMethodName)
  */
 class structural_scanner {
     /** @var int Score for missing version.php. */
@@ -92,7 +95,7 @@ class structural_scanner {
     ];
 
     /**
-     * Scans a plugin's structural integrity with deep analysis.
+     * Scans a plugin's structural integrity.
      *
      * @param string $component Component name.
      * @return array Structural findings with score.
@@ -120,19 +123,13 @@ class structural_scanner {
         }
 
         $score = 0;
-
-        // 1. File structure checks.
         $this->check_base_structure($dir, $findings, $score);
 
-        // 2. Check version.php for maturity and legacy cron.
         if ($findings['has_version_file']) {
             $this->check_version_metadata($dir, $findings, $score);
         }
 
-        // 3. Scan PHP source files for deprecated/unsafe function calls.
         $this->scan_php_sources($dir, $findings, $score);
-
-        // Cap total structural score at 65.
         $findings['structural_score'] = min($score, 65);
 
         return $findings;
@@ -142,8 +139,8 @@ class structural_scanner {
      * Checks basic file structure of the plugin.
      *
      * @param string $dir Plugin directory.
-     * @param array &$findings Findings array passed by reference.
-     * @param int &$score Risk score passed by reference.
+     * @param array $findings Findings array.
+     * @param int $score Risk score.
      * @return void
      */
     private function check_base_structure(string $dir, array &$findings, int &$score): void {
@@ -177,14 +174,13 @@ class structural_scanner {
      * Validates metadata inside version.php.
      *
      * @param string $dir Plugin directory.
-     * @param array &$findings Findings array passed by reference.
-     * @param int &$score Risk score passed by reference.
+     * @param array $findings Findings array.
+     * @param int $score Risk score.
      * @return void
      */
     private function check_version_metadata(string $dir, array &$findings, int &$score): void {
         $versioncontent = @file_get_contents($dir . '/version.php');
         if ($versioncontent !== false) {
-            // Maturity check.
             if (strpos($versioncontent, '$plugin->maturity') !== false) {
                 $findings['has_maturity'] = true;
             } else {
@@ -192,7 +188,6 @@ class structural_scanner {
                 $findings['issues'][] = get_string('structural_no_maturity', 'local_mrca');
             }
 
-            // Legacy cron check.
             if (strpos($versioncontent, '$plugin->cron') !== false) {
                 $findings['uses_legacy_cron'] = true;
                 $score += self::SCORE_LEGACY_CRON;
@@ -205,8 +200,8 @@ class structural_scanner {
      * Scans PHP files for deprecated and unsafe function calls.
      *
      * @param string $dir Plugin directory.
-     * @param array &$findings Findings array passed by reference.
-     * @param int &$score Risk score passed by reference.
+     * @param array $findings Findings array.
+     * @param int $score Risk score.
      * @return void
      */
     private function scan_php_sources(string $dir, array &$findings, int &$score): void {
@@ -220,34 +215,35 @@ class structural_scanner {
             }
 
             $relative = str_replace($dir . '/', '', $file);
-
-            // Check deprecated Moodle functions.
-            foreach (self::DEPRECATED_FUNCTIONS as $func => $reason) {
-                if ($this->contains_function_call($content, $func)) {
-                    $findings['deprecated_calls'][] = [
-                        'file' => $relative,
-                        'function' => $func,
-                        'reason' => $reason,
-                    ];
-                    $deprecatedscore += self::SCORE_DEPRECATED_CALL;
-                }
-            }
-
-            // Check unsafe PHP functions.
-            foreach (self::UNSAFE_PHP_FUNCTIONS as $func => $reason) {
-                if ($this->contains_function_call($content, $func)) {
-                    $findings['unsafe_calls'][] = [
-                        'file' => $relative,
-                        'function' => $func,
-                        'reason' => $reason,
-                    ];
-                    $deprecatedscore += self::SCORE_DEPRECATED_CALL;
-                }
-            }
+            $deprecatedscore += $this->scan_content($content, $relative, $findings);
         }
 
-        // Cap deprecated calls score.
         $score += min($deprecatedscore, self::DEPRECATED_CALLS_CAP);
+    }
+
+    /**
+     * Scans content of a single file.
+     *
+     * @param string $content
+     * @param string $relative
+     * @param array $findings
+     * @return int
+     */
+    private function scan_content(string $content, string $relative, array &$findings): int {
+        $score = 0;
+        foreach (self::DEPRECATED_FUNCTIONS as $func => $reason) {
+            if ($this->contains_function_call($content, $func)) {
+                $findings['deprecated_calls'][] = ['file' => $relative, 'function' => $func, 'reason' => $reason];
+                $score += self::SCORE_DEPRECATED_CALL;
+            }
+        }
+        foreach (self::UNSAFE_PHP_FUNCTIONS as $func => $reason) {
+            if ($this->contains_function_call($content, $func)) {
+                $findings['unsafe_calls'][] = ['file' => $relative, 'function' => $func, 'reason' => $reason];
+                $score += self::SCORE_DEPRECATED_CALL;
+            }
+        }
+        return $score;
     }
 
     /**
@@ -259,8 +255,6 @@ class structural_scanner {
      */
     private function get_php_files(string $dir, int $depth = 0): array {
         $files = [];
-
-        // Limit recursion to avoid scanning massive plugin trees.
         if ($depth > 5) {
             return $files;
         }
@@ -271,15 +265,11 @@ class structural_scanner {
         }
 
         foreach ($entries as $entry) {
-            if (
-                $entry === '.' || $entry === '..' || $entry === 'vendor' ||
-                $entry === 'node_modules' || $entry === '.git'
-            ) {
+            if (in_array($entry, ['.', '..', 'vendor', 'node_modules', '.git'])) {
                 continue;
             }
 
             $path = $dir . '/' . $entry;
-
             if (is_dir($path)) {
                 $files = array_merge($files, $this->get_php_files($path, $depth + 1));
             } else if (pathinfo($entry, PATHINFO_EXTENSION) === 'php') {
@@ -291,55 +281,17 @@ class structural_scanner {
     }
 
     /**
-     * Checks if a file content contains a function call (not class/method name or comment).
-     *
-     * Uses a simple heuristic: looks for the function name followed by '('.
-     * Skips matches inside single-line comments or class/method definitions.
+     * Checks if a file content contains a function call.
      *
      * @param string $content File content.
      * @param string $function Function name.
      * @return bool
      */
     private function contains_function_call(string $content, string $function): bool {
-        // Pattern: function name followed by opening parenthesis, not preceded by
-        // 'function ', '->' or '::' (those would be definitions or method calls on objects).
         $pattern = '/(?<!\w)(?<!->)(?<!::)(?<!function\s)' . preg_quote($function, '/') . '\s*\(/';
-
-        // Quick pre-check to avoid regex on files that don't contain the name at all.
         if (strpos($content, $function) === false) {
             return false;
         }
-
-        // Remove comments to avoid false positives.
-        $lines = explode("\n", $content);
-        $inblockcomment = false;
-        $cleancontent = '';
-
-        foreach ($lines as $line) {
-            $trimmed = ltrim($line);
-
-            if ($inblockcomment) {
-                if (strpos($line, '*/') !== false) {
-                    $inblockcomment = false;
-                }
-                continue;
-            }
-
-            if (strpos($trimmed, '/*') === 0 || strpos($trimmed, '/**') === 0) {
-                if (strpos($line, '*/') === false) {
-                    $inblockcomment = true;
-                }
-                continue;
-            }
-
-            // Skip single-line comments.
-            if (strpos($trimmed, '//') === 0) {
-                continue;
-            }
-
-            $cleancontent .= $line . "\n";
-        }
-
-        return (bool)preg_match($pattern, $cleancontent);
+        return (bool)preg_match($pattern, $content);
     }
 }
