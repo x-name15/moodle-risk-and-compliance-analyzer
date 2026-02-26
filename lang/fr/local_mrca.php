@@ -67,7 +67,7 @@ $string['integration_method_disabled'] = 'Désactivé';
 $string['integration_method_mih'] = 'Integration Hub for Moodle™';
 $string['integration_method_webhook'] = 'Webhook générique';
 $string['last_scan'] = 'Dernière analyse';
-$string['mih_missing_note'] = 'Integration Hub for Moodle™ (local_integrationhub) n'est pas installé. <a href="https://github.com/x-name15/moodle-local_integrationhub/releases" target="_blank">Téléchargez-le depuis GitHub</a> pour des capacités d'intégration avancées (recommandé).';
+$string['mih_missing_note'] = 'Integration Hub for Moodle™ (local_integrationhub) n\'est pas installé. <a href="https://github.com/x-name15/moodle-local_integrationhub/releases" target="_blank">Téléchargez-le depuis GitHub</a> pour des capacités d\'intégration avancées (recommandé).';
 $string['mih_service_slug'] = 'MIH Service Slug';
 $string['mih_service_slug_desc'] = 'Slug du service configuré dans l’Integration Hub pour les données MRCA.';
 $string['mrca'] = 'MRCA';
