@@ -65,11 +65,15 @@ class privacy_scanner {
      */
     public function has_privacy_provider(string $component): bool {
         $classname = "\\$component\\privacy\\provider";
+        $implemented = false;
         if (class_exists($classname)) {
             $rc = new \ReflectionClass($classname);
-            return $rc->implementsInterface(\core_privacy\local\metadata\provider::class);
+            $implemented = $rc->implementsInterface(\core_privacy\local\metadata\provider::class);
+            if (!$implemented) {
+                $implemented = $rc->implementsInterface(\core_privacy\local\metadata\null_provider::class);
+            }
         }
-        return false;
+        return $implemented;
     }
 
     /**

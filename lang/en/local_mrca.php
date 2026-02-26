@@ -65,10 +65,10 @@ $string['integration_heading_desc'] = 'Configure how MRCA dispatches results to 
 $string['integration_method'] = 'Integration Method';
 $string['integration_method_desc'] = 'Choose how to send scan results externally.';
 $string['integration_method_disabled'] = 'Disabled';
-$string['integration_method_mih'] = 'Moodle Integration Hub';
+$string['integration_method_mih'] = 'Integration Hub for Moodle™';
 $string['integration_method_webhook'] = 'Generic Webhook';
 $string['last_scan'] = 'Last Scan';
-$string['mih_missing_note'] = 'Moodle Integration Hub (local_integrationhub) is not installed. <a href="https://github.com/x-name15/moodle-integration-hub/releases/tag/1.0.0" target="_blank">Download it from GitHub</a> for advanced integration capabilities (recommended).';
+$string['mih_missing_note'] = 'Integration Hub for Moodle™ (local_integrationhub) is not installed. <a href="https://github.com/x-name15/moodle-local_integrationhub/releases/tag/1.0.0" target="_blank">Download it from GitHub</a> for advanced integration capabilities (recommended).';
 $string['mih_service_slug'] = 'MIH Service Slug';
 $string['mih_service_slug_desc'] = 'The service slug configured in the Integration Hub for MRCA data.';
 $string['mrca'] = 'MRCA';

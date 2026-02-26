@@ -164,7 +164,7 @@ Navegar a **Administración del sitio → Servidor → MRCA → Configuración**
 | **Método de integración** | Elegir: Desactivado, Webhook o MIH |
 | **URL del Webhook** | Endpoint para enviar reportes vía POST |
 | **Token del Webhook** | Token Bearer para autenticación |
-| **Slug del servicio MIH** | Identificador del servicio en Moodle Integration Hub |
+| **Slug del servicio MIH** | Identificador del servicio en Integration Hub for Moodle™ |
 | **Trigger de reportes** | Cuándo enviar: siempre, solo_alto_riesgo, o manual |
 
 ---
@@ -314,7 +314,7 @@ Configura un endpoint HTTP para recibir solicitudes POST con resultados de escan
 
 ### Integración MIH
 
-Si [Moodle Integration Hub](https://github.com/x-name15/moodle-integration-hub) está instalado, MRCA puede despachar reportes a través del bus de servicios MIH.
+Si [Integration Hub for Moodle™](https://github.com/x-name15/moodle-local_integrationhub) está instalado, MRCA puede despachar reportes a través del bus de servicios MIH.
 
 ---
 

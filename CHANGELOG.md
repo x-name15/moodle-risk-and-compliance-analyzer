@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.5.0] - 2026-02-26
+
+### Patch & Chill Update
+- **Privacy Scanner:** Enhanced `has_privacy_provider()` to detect null privacy providers (`\core_privacy\local\metadata\null_provider`). Plugins that implement null providers (i.e., don't store user data) are now correctly recognized as compliant. (Thanks to @ewallah again :D)
+
+### Changed
+- **Branding & Links:** Updated all references from "Moodle Integration Hub" to "Integration Hub for Moodle™" across all language strings (en, es, fr, it, pt) and documentation.
+- **Repository:** Updated Integration Hub repository links from `moodle-integration-hub` to `moodle-local_integrationhub`.
+
 ## [1.1.5] - 2026-02-24
 
 ### 🌟 The (I hope) "Golden Release"
@@ -47,7 +56,7 @@
 #### 📤 Reports & Integration
 - Export in PDF, CSV, and JSON formats.
 - Webhook integration for external SIEM/SOC systems.
-- Moodle Integration Hub (MIH) support.
+- Integration Hub for Moodle™ (MIH) support.
 
 #### 🔐 Privacy & Compliance
 - Full Moodle Privacy API implementation (GDPR).
