@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_mrca';
-$plugin->version = 2026022415;
+$plugin->version = 2026022600;
 $plugin->requires = 2022112800;
 $plugin->supported = [401, 501];
 $plugin->maturity = MATURITY_STABLE;
